@@ -78,10 +78,9 @@ jobs:
           # JIT kernels: every Intel GPU
           - arch: ""
             suffixes: ""
-          # AOT kernels for Arrow Lake-H with the >4 GB buffer fix (verified on an Arc 140T);
-          # -arl-h-beta stays as an alias for setups that tested the beta
+          # AOT kernels for Arrow Lake-H with the >4 GB buffer fix (verified on an Arc 140T)
           - arch: "arl-h"
-            suffixes: "-arl-h,-arl-h-beta"
+            suffixes: "-arl-h"
     steps:
       - name: Free disk space
         run: |

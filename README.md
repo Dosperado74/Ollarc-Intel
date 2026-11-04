@@ -56,7 +56,6 @@ docker compose exec ollama ollama ps                        # -> PROCESSOR 100% 
 | `ghcr.io/dosperado74/ollarc-intel:latest` | JIT (SPIR-V) | **recommended**, every supported Intel GPU |
 | `:<ollama-version>` | JIT | pinned versions, e.g. `0.40.14` |
 | `:latest-arl-h` | AOT `arl-h` + 4 GB fix | Arrow Lake-H (Core Ultra 200H, Arc 140T / 130T): faster first load |
-| `:latest-arl-h-beta` | same as `latest-arl-h` | kept for existing setups |
 
 JIT images compile the GPU kernels once when a model is loaded; AOT images ship them
 precompiled, which only shortens that first load. Inference speed is the same.
