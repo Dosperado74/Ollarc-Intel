@@ -32,7 +32,7 @@ ASUS NUC 14 Pro+, Intel Core Ultra 9 285H, Arc 140T iGPU (Arrow Lake-H, `8086:7d
 
 Reproduced with plain llama.cpp v0.9.0 (commit cd959ba) and `ggml-org/gpt-oss-20b-GGUF`:
 JIT correct, AOT `arl-h` prints `GGGG…`, AOT `arl-h` with the patch prints exactly the
-JIT output. Tooling: `diagnostics/repro-aot-4gb.Dockerfile` / `repro-aot-4gb.sh`.
+JIT output.
 
 ### Problem description & steps to reproduce
 

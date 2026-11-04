@@ -67,10 +67,10 @@ fails with `prediction aborted, token repeat limit reached`. Small models
 `GGML_SYCL_DEVICE_ARCH` is set. AOT kernels then use 32-bit offsets, which overflow in
 buffers above 4 GB. Every op passes `test-backend-ops` because its tensors are small.
 
-**How it was found** `diagnostics/bisect-tensors.sh`: only "experts on CPU" was
-correct (that leaves < 4 GB on the GPU); no kernel switch helped; all
-`test-backend-ops` cases, including the exact gpt-oss shapes, passed; the JIT image
-produced correct output.
+**How it was found** Keeping groups of tensors on the CPU (`llama-server
+--override-tensor`) showed that only "MoE experts on CPU" was correct, which leaves less
+than 4 GB on the GPU. No kernel switch helped, all `test-backend-ops` cases (including the
+exact gpt-oss shapes) passed, and the JIT image produced correct output.
 
 **Fix**
 - `latest` (JIT) was never affected.
