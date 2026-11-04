@@ -15,11 +15,13 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 
 Tested on an ASUS NUC with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, Ollama v0.40.14:
 
-| Model | Result | Decode |
-|---|---|---|
-| `llama3.2:3b` | ✅ 100 % GPU, correct | 22.7 tok/s |
-| `qwen3.8:27b` (Q4) | ✅ 100 % GPU (66/66 layers) | dense 27B, slow on any iGPU |
-| `gpt-oss:20b` | ✅ correct with the JIT image | |
+| Model | Result | Prefill | Decode |
+|---|---|---|---|
+| `llama3.2:3b` | ✅ 100 % GPU | – | 22.7 tok/s (short prompt) |
+| `gpt-oss:20b` (MXFP4) | ✅ 100 % GPU, `latest-arl-h` | **1106 tok/s** (6549-token prompt) | 10.6 tok/s (at 6.5K context) |
+| `qwen3.8:27b` (Q4) | ✅ 100 % GPU (66/66 layers) | – | dense 27B, slow on any iGPU |
+
+Measured in Open WebUI / `scripts/bench.sh`. More results from other Intel GPUs are welcome as issues.
 
 Problems found on the way, their causes and fixes are in
 [docs/known-issues.md](docs/known-issues.md). If something does not work, start with
