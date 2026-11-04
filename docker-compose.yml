@@ -1,4 +1,4 @@
-# ollarc-intel: Ollama (Intel GPU / SYCL) + Open WebUI + SearXNG web search
+# ollarc-intel: Ollama (Intel GPU / SYCL) + Open WebUI
 #
 #   docker compose up -d
 #   docker compose exec ollama ollama pull gemma4:e4b
@@ -38,32 +38,13 @@ services:
     restart: unless-stopped
     depends_on:
       - ollama
-      - searxng
     ports:
       - "3000:8080"
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - WEBUI_AUTH=true
-      # web search via SearXNG. Applies to a fresh Open WebUI install; an existing one keeps
-      # its admin settings, see docs/websearch.md
-      - ENABLE_WEB_SEARCH=true
-      - WEB_SEARCH_ENGINE=searxng
-      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
-      - WEB_SEARCH_RESULT_COUNT=5
     volumes:
       - open-webui:/app/backend/data
-
-  searxng:
-    image: docker.io/searxng/searxng:latest
-    container_name: searxng
-    restart: unless-stopped
-    # no published port: only Open WebUI talks to it
-    environment:
-      - SEARXNG_BASE_URL=http://searxng:8080/
-      # listen on IPv4: the default (::) fails where Docker has no IPv6
-      - GRANIAN_HOST=0.0.0.0
-    volumes:
-      - ./searxng:/etc/searxng
 
 volumes:
   ollama:
