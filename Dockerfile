@@ -99,6 +99,20 @@ COPY --from=native /src/dist/lib/ollama /usr/lib/ollama
 COPY --from=native /opt/intel/oneapi/compiler/latest/bin/sycl-ls /usr/local/bin/sycl-ls
 COPY entrypoint.sh /usr/local/bin/ollarc-entrypoint
 
+# The oneAPI runtime image only registers oneapi/redist/lib with the dynamic
+# linker, but the Level Zero UR adapter needs libumf.so.1 from oneapi/umf/<ver>/lib.
+# Without it SYCL silently sees no GPU ("No platforms found").
+# Fail the build if any SYCL / Level Zero dependency does not resolve.
+RUN set -e; \
+    find /opt/intel/oneapi -maxdepth 3 -type d -path '*/umf/*/lib' > /etc/ld.so.conf.d/zz-oneapi-umf.conf; \
+    ldconfig; \
+    missing=$(for f in /opt/intel/oneapi/redist/lib/libur_loader.so.0 \
+                       /opt/intel/oneapi/redist/lib/libur_adapter_level_zero*.so.0 \
+                       /usr/lib/ollama/sycl/libggml-sycl.so; do \
+                  LD_LIBRARY_PATH=/usr/lib/ollama ldd "$f" | grep "not found" | sed "s|^|$f: |"; \
+              done); \
+    if [ -n "$missing" ]; then echo "unresolved SYCL/Level Zero libraries:"; echo "$missing"; exit 1; fi
+
 LABEL org.opencontainers.image.title="ollarc-intel" \
       org.opencontainers.image.description="Upstream Ollama with the llama.cpp SYCL backend for Intel Arc / Xe GPUs" \
       org.opencontainers.image.source="https://github.com/Dosperado74/ollarc-intel" \
