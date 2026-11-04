@@ -19,6 +19,7 @@ Tested on an ASUS NUC with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, 
 |---|---|---|---|
 | `llama3.2:3b` (Q4_K_M) | ✅ 100 % GPU, `latest-arl-h` | **1249 tok/s** (~800-token prompt) | **24.3 tok/s** |
 | `gpt-oss:20b` (MXFP4) | ✅ 100 % GPU, `latest-arl-h` | 288 tok/s (~800-token prompt), **1106 tok/s** (6549-token prompt) | **12.8 tok/s** (empty context), 10.6 tok/s (6.5K context) |
+| `gemma4:e4b` | ✅ 100 % GPU, `latest-arl-h` (per-layer embeddings stay in RAM by design) | 361 tok/s (~800-token prompt) | **16.1 tok/s** |
 | `qwen3.8:27b` (Q4, dense) | ✅ 100 % GPU (66/66 layers), `latest-arl-h` | 109 tok/s (~800-token prompt) | 3.2–5.9 tok/s (depends on how well its MTP head predicts) |
 
 Measured in Open WebUI / `scripts/bench.sh`. MoE models like gpt-oss process long prompts much more
