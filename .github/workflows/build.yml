@@ -71,6 +71,17 @@ jobs:
     if: needs.resolve.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # JIT kernels: every Intel GPU. The -arl-h tags are aliases of this image
+          # until the AOT build below is verified on real hardware.
+          - arch: ""
+            suffixes: ",-arl-h"
+          # AOT kernels for Arrow Lake-H, with the >4 GB buffer fix (beta)
+          - arch: "arl-h"
+            suffixes: "-arl-h-beta"
     steps:
       - name: Free disk space
         run: |
@@ -90,8 +101,10 @@ jobs:
         run: |
           v="${{ needs.resolve.outputs.version }}"; v="${v#v}"
           image="${IMAGE,,}"
-          # -arl-h tags used to be AOT builds, which break models > 4 GB; keep them as aliases
-          echo "tags=$image:$v,$image:latest,$image:$v-arl-h,$image:latest-arl-h" >> "$GITHUB_OUTPUT"
+          tags=""
+          IFS=',' read -ra sfx <<< "${{ matrix.suffixes }}"
+          for s in "${sfx[@]}"; do tags="$tags,$image:$v$s,$image:latest$s"; done
+          echo "tags=${tags#,}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/build-push-action@v6
         with:
@@ -100,9 +113,10 @@ jobs:
           platforms: linux/amd64
           build-args: |
             OLLAMA_VERSION=${{ needs.resolve.outputs.version }}
+            SYCL_DEVICE_ARCH=${{ matrix.arch }}
           tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha,scope=ollarc
-          cache-to: type=gha,mode=max,scope=ollarc
+          cache-from: type=gha,scope=ollarc${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=ollarc${{ matrix.arch }}
 
   release:
     needs: [resolve, image]

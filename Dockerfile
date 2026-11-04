@@ -8,8 +8,9 @@
 # OLLAMA_VERSION    upstream git tag of github.com/ollama/ollama (default: see UPSTREAM_VERSION)
 # LLAMA_CPP_VERSION empty = the llama.cpp build Ollama pins; e.g. b12086 for a newer SYCL backend
 # SYCL_DEVICE_ARCH empty = JIT (default, works on every Intel GPU).
-#                  Do NOT set it for normal use: llama.cpp builds AOT kernels without
-#                  >4 GB buffer support, so models above ~4 GB compute garbage.
+#                  arl-h / mtl-h / lnl-m / ... = ahead-of-time kernels for one GPU family.
+#                  Upstream llama.cpp builds AOT kernels without >4 GB buffer support
+#                  (models above ~4 GB compute garbage); patches/llama.cpp/900-* fixes that.
 
 ARG ONEAPI_VERSION=2026.2.0
 ARG UBUNTU_VERSION=26.04
@@ -24,9 +25,12 @@ WORKDIR /src
 RUN git -c advice.detachedHead=false clone --depth 1 --branch "${OLLAMA_VERSION}" \
         https://github.com/ollama/ollama.git ollama
 COPY patches /patches
+# patches/*.patch change Ollama; patches/llama.cpp/*.patch change llama.cpp itself:
+# Ollama applies every llama/compat/*.patch to the fetched llama.cpp in filename order
 RUN cd ollama && for p in /patches/*.patch; do \
         echo "applying ${p}" && git apply --whitespace=nowarn "${p}" || exit 1; \
-    done
+    done \
+    && cp /patches/llama.cpp/*.patch llama/compat/
 # Optional: build against a newer llama.cpp than the one Ollama pins
 # (e.g. --build-arg LLAMA_CPP_VERSION=b12086). Ollama's compat patch must still apply.
 ARG LLAMA_CPP_VERSION=
