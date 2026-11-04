@@ -9,7 +9,7 @@ Ollama v0.40.14, llama.cpp b11963, oneAPI 2026.2.
 |---|---|---|---|
 | 1 | `sycl-ls`: *No platforms found*, Ollama runs on CPU | oneAPI runtime image does not register `libumf.so.1` with the dynamic linker | **fixed** in the image |
 | 2 | `offloaded 0/66 layers to GPU`, `ollama ps` shows `99%/1% CPU/GPU` | Level Zero Sysman reports the host's *MemFree* as free iGPU memory | **fixed** (`GGML_SYCL_GET_MEM_API=1`) |
-| 3 | Models > 4 GB answer `GGGGGGGG…` or loop, Ollama aborts with *token repeat limit reached* | AOT (`arl-h`) kernels built without >4 GB buffer support | **fixed** for JIT; AOT fix in beta |
+| 3 | Models > 4 GB answer `GGGGGGGG…` or loop, Ollama aborts with *token repeat limit reached* | AOT (`arl-h`) kernels built without >4 GB buffer support | **fixed** (patch, verified on Arc 140T) |
 | 4 | `test-backend-ops`: 2 × `FLASH_ATTN_EXT` fail (`hsk=256`) | SYCL flash attention, head size 256 | open, upstream |
 | 5 | `test-backend-ops`: 2 × `MUL_MAT` fail (`bf16`, permuted `src0`) | SYCL BF16 mat-mul on non-contiguous weights | open, upstream |
 | 6 | Qwen3.8 27B answers take minutes | dense 27B model + long *thinking* phase on an iGPU | expected, see below |
@@ -73,10 +73,11 @@ correct (that leaves < 4 GB on the GPU); no kernel switch helped; all
 produced correct output.
 
 **Fix**
-- `latest` (JIT) is correct. The old `latest-arl-h` tag now points to it.
+- `latest` (JIT) was never affected.
 - `patches/llama.cpp/900-sycl-aot-4gb-buffers.patch` passes the same option to `ocloc`
-  (`-options -ze-intel-greater-than-4GB-buffer-required`). It is published as
-  `latest-arl-h-beta` until it is verified on real hardware.
+  (`-options -ze-intel-greater-than-4GB-buffer-required`). Verified: with the patched
+  AOT image, `gpt-oss:20b` gives a correct answer on an Arc 140T, where the unpatched
+  AOT image printed only `GGGG…`. `latest-arl-h` is built with it.
 - Upstream report: [`docs/upstream/llama.cpp-sycl-aot-4gb.md`](upstream/llama.cpp-sycl-aot-4gb.md).
 
 ## 4. Flash attention with head size 256

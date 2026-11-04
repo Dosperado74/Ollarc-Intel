@@ -31,7 +31,7 @@ Set all variables in the `environment:` block of the `ollama` service.
 
 ## Slow first start?
 
-The image compiles the GPU kernels the first time a model is loaded (JIT). Precompiled
-(AOT) kernels would avoid that, but llama.cpp builds them without support for buffers
-larger than 4 GB, so they break every model above ~4 GB.
+The `latest` image compiles the GPU kernels the first time a model is loaded (JIT). On
+Arrow Lake-H (Core Ultra 200H) use `OLLARC_TAG=latest-arl-h`: its kernels are
+precompiled (AOT) for the Arc 140T / 130T. Inference speed is the same either way.
 llama.cpp explicitly does **not** recommend `SYCL_CACHE_PERSISTENT=1`.

@@ -130,5 +130,5 @@ Short version. The iGPU is gone from the host afterwards:
 | `Permission denied` on `/dev/dri/renderD128` | `RENDER_GID` does not match the GID of `renderD128` inside the container |
 | `library=cpu` in the logs | run `docker compose exec ollama sycl-ls`; if it lists no `level_zero:gpu`, the container cannot reach the GPU |
 | first model load is slow | one-time JIT compilation of the SYCL kernels for that model |
-| model outputs `GGGG…` or loops endlessly | you run an old `latest-arl-h` (AOT) image: `docker compose pull` (AOT kernels break models > 4 GB) |
+| model outputs `GGGG…` or loops endlessly | you run an old `latest-arl-h` (AOT) image from before the 4 GB fix: `docker compose pull` |
 | OOM / container gets killed | raise the LXC RAM limit, because iGPU memory counts as RAM |

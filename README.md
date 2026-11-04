@@ -49,17 +49,18 @@ docker compose exec ollama ollama ps                        # -> PROCESSOR 100% 
 |---|---|---|
 | `ghcr.io/dosperado74/ollarc-intel:latest` | JIT (SPIR-V) | **recommended**, every supported Intel GPU |
 | `:<ollama-version>` | JIT | pinned versions, e.g. `0.40.14` |
-| `:latest-arl-h` | JIT | alias of `latest` (see below) |
-| `:latest-arl-h-beta` | AOT `arl-h` + 4 GB fix | Arrow Lake-H, **beta**: please report results |
+| `:latest-arl-h` | AOT `arl-h` + 4 GB fix | Arrow Lake-H (Core Ultra 200H, Arc 140T / 130T): faster first load |
+| `:latest-arl-h-beta` | same as `latest-arl-h` | kept for existing setups |
 
 JIT images compile the GPU kernels once when a model is loaded; AOT images ship them
 precompiled, which only shortens that first load. Inference speed is the same.
 
-> **Why the AOT image is beta.** Upstream llama.cpp builds AOT kernels without support
+> **AOT and models above 4 GB.** Upstream llama.cpp builds AOT kernels without support
 > for GPU buffers larger than 4 GB, so every model above ~4 GB (gpt-oss, Qwen 27B, …)
-> produced garbage such as `GGGG…` with the former `latest-arl-h` image.
+> produced garbage such as `GGGG…` with the first `latest-arl-h` images.
 > [`patches/llama.cpp/900-sycl-aot-4gb-buffers.patch`](patches/llama.cpp/900-sycl-aot-4gb-buffers.patch)
-> fixes the build; `latest-arl-h` becomes AOT again once that is confirmed on real hardware.
+> fixes the build (verified with gpt-oss:20b on an Arc 140T). If you still get `GGGG…`,
+> run `docker compose pull`.
 > Details: [known-issues.md §3](docs/known-issues.md#3-models-above-4-gb-compute-garbage-with-aot-kernels).
 
 ## How it works
@@ -83,7 +84,7 @@ The patches are small on purpose so they keep applying to new Ollama releases. I
 ```bash
 docker build -t ollarc-intel .                                             # current UPSTREAM_VERSION, JIT
 docker build --build-arg OLLAMA_VERSION=v0.40.14 --build-arg LLAMA_CPP_VERSION=b12086 .
-docker build --build-arg SYCL_DEVICE_ARCH=arl-h -t ollarc-intel:arl-h .   # AOT for Arrow Lake-H (beta)
+docker build --build-arg SYCL_DEVICE_ARCH=arl-h -t ollarc-intel:arl-h .   # AOT for Arrow Lake-H
 ```
 
 ## Benchmark
@@ -110,7 +111,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 
 ## Maintainer notes (CI)
 
-- `.github/workflows/build.yml` runs daily. It builds the JIT image and the AOT beta for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
+- `.github/workflows/build.yml` runs daily. It builds the JIT image and the Arrow Lake-H AOT image for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
 - First run: *Actions → build → Run workflow*. Afterwards set the package to **public** under *Packages → ollarc-intel → Package settings → Change visibility*.
 - The repository must be **public** for unlimited free Actions minutes.
 

@@ -62,7 +62,9 @@ Pass the same option to `ocloc` for AOT builds:
 ```
 
 in both `target_compile_options` and `target_link_options` of the
-`if (GGML_SYCL_DEVICE_ARCH)` block. Full patch:
+`if (GGML_SYCL_DEVICE_ARCH)` block. **Verified:** with this change the AOT (`arl-h`)
+build gives a correct answer for gpt-oss-20b on the Arc 140T. The patch still applies to
+v0.9.0 (b12110), where the `Skipping …` branch is unchanged. Full patch:
 <https://github.com/Dosperado74/ollarc-intel/blob/main/patches/llama.cpp/900-sycl-aot-4gb-buffers.patch>
 
 ### Relevant log output

@@ -75,13 +75,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # JIT kernels: every Intel GPU. The -arl-h tags are aliases of this image
-          # until the AOT build below is verified on real hardware.
+          # JIT kernels: every Intel GPU
           - arch: ""
-            suffixes: ",-arl-h"
-          # AOT kernels for Arrow Lake-H, with the >4 GB buffer fix (beta)
+            suffixes: ""
+          # AOT kernels for Arrow Lake-H with the >4 GB buffer fix (verified on an Arc 140T);
+          # -arl-h-beta stays as an alias for setups that tested the beta
           - arch: "arl-h"
-            suffixes: "-arl-h-beta"
+            suffixes: "-arl-h,-arl-h-beta"
     steps:
       - name: Free disk space
         run: |
@@ -103,6 +103,7 @@ jobs:
           image="${IMAGE,,}"
           tags=""
           IFS=',' read -ra sfx <<< "${{ matrix.suffixes }}"
+          [ ${#sfx[@]} -gt 0 ] || sfx=("")
           for s in "${sfx[@]}"; do tags="$tags,$image:$v$s,$image:latest$s"; done
           echo "tags=${tags#,}" >> "$GITHUB_OUTPUT"
 
