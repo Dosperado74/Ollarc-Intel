@@ -9,8 +9,8 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 - ✅ newest toolchain: oneAPI 2026.2, the llama.cpp build that Ollama pins (newer ones selectable)
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
-> Running on Proxmox VE? See the [Proxmox guide](docs/proxmox.md) (LXC recommended).
-> Plain Linux host (Debian, Ubuntu, …)? See [host setup](docs/host-setup.md): kernel and GPU firmware.
+> **Two ways to run it:** directly on a Linux host (Debian, Ubuntu, Fedora, …) or in a
+> Proxmox VE LXC. Both are covered in the Quick start below.
 
 ## Status
 
@@ -34,16 +34,37 @@ Problems found on the way, their causes and fixes are in
 
 ## Quick start (Docker + Open WebUI)
 
+### 1. Prepare the host
+
+The container brings the whole Intel GPU user space. The host only needs a recent kernel
+(Meteor/Lunar Lake ≥ 6.8, Arrow Lake ≥ 6.11) and the **Intel GPU firmware**. Without the
+firmware the GPU cannot run compute work and Ollama falls back to the CPU.
+
+| Host | What to do |
+|---|---|
+| **Debian 13** | enable `non-free-firmware`, `sudo apt install firmware-intel-graphics`, `sudo update-initramfs -u -k all`, reboot |
+| **Debian 12** | same, with `firmware-misc-nonfree` |
+| **Ubuntu / Fedora** | nothing, `linux-firmware` is installed by default |
+| **Proxmox VE** | nothing on the host (`pve-firmware`), run it in an LXC: [Proxmox guide](docs/proxmox.md) |
+
+Check: `ls /dev/dri` shows `renderD128`. Details and troubleshooting: [docs/host-setup.md](docs/host-setup.md).
+
+### 2. Start Ollama + Open WebUI
+
 ```bash
+curl -fsSL https://get.docker.com | sh            # if Docker is not installed yet
 git clone https://github.com/Dosperado74/ollarc-intel && cd ollarc-intel
-echo "RENDER_GID=$(getent group render | cut -d: -f3)" > .env
+echo "RENDER_GID=$(stat -c %g /dev/dri/renderD128)" > .env
 docker compose up -d
 docker compose exec ollama ollama pull llama3.2:3b
 ```
 
 Open WebUI: `http://<host>:3000` · Ollama API: `http://<host>:11434`
 
-Check that the GPU is used:
+On Arrow Lake-H (Core Ultra 200H, Arc 140T/130T) add `OLLARC_TAG=latest-arl-h` to `.env`
+for precompiled kernels (faster first model load).
+
+### 3. Check that the GPU is used
 
 ```bash
 docker compose logs ollama | grep -i "inference compute"   # -> library=SYCL ... Intel(R) Arc(TM) ...
