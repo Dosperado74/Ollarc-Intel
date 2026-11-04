@@ -95,6 +95,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=gobuild /out/ollama /usr/bin/ollama
 COPY --from=native /src/dist/lib/ollama /usr/lib/ollama
+# sycl-ls: lists the SYCL/Level Zero devices the container can see (diagnostics)
+COPY --from=native /opt/intel/oneapi/compiler/latest/bin/sycl-ls /usr/local/bin/sycl-ls
 COPY entrypoint.sh /usr/local/bin/ollarc-entrypoint
 
 LABEL org.opencontainers.image.title="ollarc-intel" \
