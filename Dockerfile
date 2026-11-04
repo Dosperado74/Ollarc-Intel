@@ -40,6 +40,7 @@ ARG SYCL_DEVICE_ARCH=
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         cmake ninja-build git ccache gcc g++ libze-dev ca-certificates curl \
+        intel-ocloc \
     && rm -rf /var/lib/apt/lists/*
 ENV CMAKE_GENERATOR=Ninja
 WORKDIR /src
