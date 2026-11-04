@@ -48,6 +48,7 @@ run() {
   echo "### $v"
   grep -E "GGML_SYCL_DEVICE_ARCH|offloaded|SYCL0 model buffer size" /tmp/$v.log | head -3
   echo "output: ${out:0:200}"
+  [ -n "$out" ] || { echo "--- last log lines:"; tail -8 /tmp/$v.log; }
   echo
 }
 

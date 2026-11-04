@@ -25,28 +25,33 @@ RUN git -c advice.detachedHead=false clone --depth 1 --branch "${LLAMA_CPP_VERSI
         https://github.com/ggml-org/llama.cpp /src
 COPY patches/llama.cpp/900-sycl-aot-4gb-buffers.patch /tmp/fix.patch
 RUN cp -r /src /src-fixed && cd /src-fixed && git apply /tmp/fix.patch
-ENV LLAMA_CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
+# shared libs as upstream builds them: ggml-sycl's link options (AOT targets, the >4 GB
+# buffer option) only reach the final binary through libggml-sycl.so, not a static lib
+ENV LLAMA_CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx \
     -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL -DGGML_SYCL_F16=ON -DGGML_NATIVE=OFF \
     -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF"
 
 FROM base AS jit
-RUN cmake -S /src -B /b ${LLAMA_CMAKE_ARGS} && cmake --build /b --target llama-server
+RUN cmake -S /src -B /b-jit ${LLAMA_CMAKE_ARGS} && cmake --build /b-jit --target llama-server
 
 FROM base AS aot
 ARG SYCL_DEVICE_ARCH=arl-h
-RUN cmake -S /src -B /b ${LLAMA_CMAKE_ARGS} -DGGML_SYCL_DEVICE_ARCH=${SYCL_DEVICE_ARCH} \
-    && cmake --build /b --target llama-server
+RUN cmake -S /src -B /b-aot ${LLAMA_CMAKE_ARGS} -DGGML_SYCL_DEVICE_ARCH=${SYCL_DEVICE_ARCH} \
+    && cmake --build /b-aot --target llama-server
 
 FROM base AS aot-fixed
 ARG SYCL_DEVICE_ARCH=arl-h
-RUN cmake -S /src-fixed -B /b ${LLAMA_CMAKE_ARGS} -DGGML_SYCL_DEVICE_ARCH=${SYCL_DEVICE_ARCH} \
-    && cmake --build /b --target llama-server
+RUN cmake -S /src-fixed -B /b-aot-fixed ${LLAMA_CMAKE_ARGS} -DGGML_SYCL_DEVICE_ARCH=${SYCL_DEVICE_ARCH} \
+    && cmake --build /b-aot-fixed --target llama-server
 
 FROM base
-COPY --from=jit       /b/bin/llama-server /opt/repro/jit/llama-server
-COPY --from=aot       /b/bin/llama-server /opt/repro/aot/llama-server
-COPY --from=aot-fixed /b/bin/llama-server /opt/repro/aot-fixed/llama-server
+# keep each build tree's bin/ at its original path: the binaries' RPATH points there
+COPY --from=jit       /b-jit/bin       /b-jit/bin
+COPY --from=aot       /b-aot/bin       /b-aot/bin
+COPY --from=aot-fixed /b-aot-fixed/bin /b-aot-fixed/bin
+RUN mkdir -p /opt/repro && ln -s /b-jit/bin /opt/repro/jit && ln -s /b-aot/bin /opt/repro/aot \
+    && ln -s /b-aot-fixed/bin /opt/repro/aot-fixed
 ENV ONEAPI_DEVICE_SELECTOR=level_zero:* \
     UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1 \
     GGML_SYCL_GET_MEM_API=1
