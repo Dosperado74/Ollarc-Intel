@@ -1,0 +1,207 @@
+diff --git a/discover/llama_server.go b/discover/llama_server.go
+index ba8ace5..4d0e558 100644
+--- a/discover/llama_server.go
++++ b/discover/llama_server.go
+@@ -472,6 +472,8 @@ func inferLibrary(name, description string) string {
+ 		return "Metal"
+ 	case strings.Contains(combined, "vulkan"):
+ 		return "Vulkan"
++	case strings.HasPrefix(strings.ToLower(name), "sycl"):
++		return "SYCL"
+ 	default:
+ 		return description
+ 	}
+diff --git a/discover/native_probe.go b/discover/native_probe.go
+index 190ebcb..74bc006 100644
+--- a/discover/native_probe.go
++++ b/discover/native_probe.go
+@@ -244,6 +244,8 @@ func normalizeNativeProbeLibrary(library string) string {
+ 		return "ROCm"
+ 	case "vulkan":
+ 		return "Vulkan"
++	case "sycl":
++		return "SYCL"
+ 	case "metal":
+ 		return "Metal"
+ 	default:
+diff --git a/discover/native_probe_platform.go b/discover/native_probe_platform.go
+index d7a4083..50b293e 100644
+--- a/discover/native_probe_platform.go
++++ b/discover/native_probe_platform.go
+@@ -30,6 +30,8 @@ func ggmlProbeLibraryName(name string) string {
+ 		return "ROCm"
+ 	case "vulkan":
+ 		return "Vulkan"
++	case "sycl":
++		return "SYCL"
+ 	case "metal":
+ 		return "Metal"
+ 	default:
+@@ -78,6 +80,7 @@ func nativeProbeBackendPatterns(dir string) []string {
+ 			filepath.Join(dir, "ggml-cuda.dll"),
+ 			filepath.Join(dir, "ggml-hip.dll"),
+ 			filepath.Join(dir, "ggml-vulkan.dll"),
++			filepath.Join(dir, "ggml-sycl.dll"),
+ 		}
+ 	}
+ 
+@@ -85,6 +88,7 @@ func nativeProbeBackendPatterns(dir string) []string {
+ 		filepath.Join(dir, "libggml-cuda.so"),
+ 		filepath.Join(dir, "libggml-hip.so"),
+ 		filepath.Join(dir, "libggml-vulkan.so"),
++		filepath.Join(dir, "libggml-sycl.so"),
+ 	}
+ }
+ 
+diff --git a/discover/runner.go b/discover/runner.go
+index 2c533c3..1bb992a 100644
+--- a/discover/runner.go
++++ b/discover/runner.go
+@@ -425,7 +425,7 @@ func integratedGPUAdmission() (allow, explicit bool) {
+ 
+ func integratedGPUAllowedByDefault(device ml.DeviceInfo) bool {
+ 	switch device.Library {
+-	case "CUDA":
++	case "CUDA", "SYCL":
+ 		return true
+ 	case "ROCm":
+ 		_, ok := defaultIntegratedROCmGFXTargets[device.GFXTarget]
+@@ -625,6 +625,8 @@ func visibleDeviceFilterTokens(goos, library string) []string {
+ 		}
+ 	case "Vulkan":
+ 		return splitVisibleDeviceList(envconfig.VkVisibleDevices())
++	case "SYCL":
++		return syclVisibleDeviceTokens(envconfig.OneAPIDeviceSelector())
+ 	}
+ 
+ 	return nil
+@@ -739,3 +741,20 @@ func detectIncompatibleLibraries() {
+ 		slog.Warn("potentially incompatible library detected in PATH", "location", basePath)
+ 	}
+ }
++
++// syclVisibleDeviceTokens extracts the Level Zero device ids from a
++// user-provided ONEAPI_DEVICE_SELECTOR such as "level_zero:0,2" or
++// "level_zero:1;opencl:*". Wildcards and other backends are ignored.
++func syclVisibleDeviceTokens(selector string) []string {
++	for _, term := range strings.Split(selector, ";") {
++		backend, ids, ok := strings.Cut(strings.TrimSpace(term), ":")
++		if !ok || !strings.EqualFold(strings.TrimSpace(backend), "level_zero") {
++			continue
++		}
++		if strings.TrimSpace(ids) == "*" {
++			return nil
++		}
++		return splitVisibleDeviceList(ids)
++	}
++	return nil
++}
+diff --git a/discover/sycl_test.go b/discover/sycl_test.go
+new file mode 100644
+index 0000000..07b7323
+--- /dev/null
++++ b/discover/sycl_test.go
+@@ -0,0 +1,29 @@
++package discover
++
++import (
++	"slices"
++	"testing"
++)
++
++func TestInferLibrarySYCL(t *testing.T) {
++	if got := inferLibrary("SYCL0", "Intel(R) Arc(TM) 140T GPU"); got != "SYCL" {
++		t.Fatalf("inferLibrary = %q, want SYCL", got)
++	}
++}
++
++func TestSYCLVisibleDeviceTokens(t *testing.T) {
++	for _, tc := range []struct {
++		in   string
++		want []string
++	}{
++		{"", nil},
++		{"level_zero:0", []string{"0"}},
++		{"level_zero:0,2", []string{"0", "2"}},
++		{"opencl:*;level_zero:1", []string{"1"}},
++		{"level_zero:*", nil},
++	} {
++		if got := syclVisibleDeviceTokens(tc.in); !slices.Equal(got, tc.want) {
++			t.Errorf("syclVisibleDeviceTokens(%q) = %v, want %v", tc.in, got, tc.want)
++		}
++	}
++}
+diff --git a/envconfig/config.go b/envconfig/config.go
+index 0379a2a..2b90287 100644
+--- a/envconfig/config.go
++++ b/envconfig/config.go
+@@ -254,6 +254,7 @@ var (
+ 	HipVisibleDevices     = String("HIP_VISIBLE_DEVICES")
+ 	RocrVisibleDevices    = String("ROCR_VISIBLE_DEVICES")
+ 	VkVisibleDevices      = String("GGML_VK_VISIBLE_DEVICES")
++	OneAPIDeviceSelector  = String("ONEAPI_DEVICE_SELECTOR")
+ 	GpuDeviceOrdinal      = String("GPU_DEVICE_ORDINAL")
+ 	HsaOverrideGfxVersion = String("HSA_OVERRIDE_GFX_VERSION")
+ )
+@@ -358,6 +359,7 @@ func AsMap() map[string]EnvVar {
+ 		ret["HIP_VISIBLE_DEVICES"] = EnvVar{"HIP_VISIBLE_DEVICES", HipVisibleDevices(), "Set which AMD devices are visible by numeric ID"}
+ 		ret["ROCR_VISIBLE_DEVICES"] = EnvVar{"ROCR_VISIBLE_DEVICES", RocrVisibleDevices(), "Set which AMD devices are visible by UUID or numeric ID"}
+ 		ret["GGML_VK_VISIBLE_DEVICES"] = EnvVar{"GGML_VK_VISIBLE_DEVICES", VkVisibleDevices(), "Set which Vulkan devices are visible by numeric ID"}
++		ret["ONEAPI_DEVICE_SELECTOR"] = EnvVar{"ONEAPI_DEVICE_SELECTOR", OneAPIDeviceSelector(), "Set which Intel SYCL devices are visible (e.g. level_zero:0)"}
+ 		ret["GPU_DEVICE_ORDINAL"] = EnvVar{"GPU_DEVICE_ORDINAL", GpuDeviceOrdinal(), "Set which AMD devices are visible by numeric ID"}
+ 		ret["HSA_OVERRIDE_GFX_VERSION"] = EnvVar{"HSA_OVERRIDE_GFX_VERSION", HsaOverrideGfxVersion(), "Override the gfx used for all detected AMD GPUs"}
+ 		ret["OLLAMA_VULKAN"] = EnvVar{"OLLAMA_VULKAN", EnableVulkan(true), "Enable Vulkan support"}
+diff --git a/ml/device.go b/ml/device.go
+index 9a5792f..cc10d3f 100644
+--- a/ml/device.go
++++ b/ml/device.go
+@@ -214,7 +214,7 @@ func likelyVulkanDuplicate(a, b DeviceInfo) bool {
+ 	if vulkan.Library != "Vulkan" {
+ 		return false
+ 	}
+-	if other.Library != "CUDA" && other.Library != "ROCm" {
++	if other.Library != "CUDA" && other.Library != "ROCm" && other.Library != "SYCL" {
+ 		return false
+ 	}
+ 	if normalizeDeviceDescription(vulkan.Description) == "" {
+@@ -278,7 +278,8 @@ func FlashAttentionSupported(l []DeviceInfo) bool {
+ 			gpu.Name == "Metal" || gpu.Library == "Metal" ||
+ 			cudaFlashAttentionSupported(gpu) ||
+ 			gpu.Library == "ROCm" ||
+-			gpu.Library == "Vulkan"
++			gpu.Library == "Vulkan" ||
++			gpu.Library == "SYCL"
+ 
+ 		if !supportsFA {
+ 			return false
+@@ -383,7 +384,7 @@ func (d DeviceInfo) PreferredLibrary(other DeviceInfo) bool {
+ 	// TODO in the future if we find Vulkan is better than ROCm on some devices
+ 	// that implementation can live here.
+ 
+-	if d.Library == "CUDA" || d.Library == "ROCm" {
++	if d.Library == "CUDA" || d.Library == "ROCm" || d.Library == "SYCL" {
+ 		return true
+ 	}
+ 	return false
+@@ -413,6 +414,21 @@ func (d DeviceInfo) updateVisibleDevicesEnv(env map[string]string, mustFilter bo
+ 			return
+ 		}
+ 		envVar = "GGML_VK_VISIBLE_DEVICES"
++	case "SYCL":
++		if !mustFilter {
++			return
++		}
++		// ONEAPI_DEVICE_SELECTOR uses "<backend>:<id>[,<id>...]" syntax.
++		id := d.ID
++		if d.FilterID != "" {
++			id = d.FilterID
++		}
++		if v, existing := env["ONEAPI_DEVICE_SELECTOR"]; existing {
++			env["ONEAPI_DEVICE_SELECTOR"] = v + "," + id
++		} else {
++			env["ONEAPI_DEVICE_SELECTOR"] = "level_zero:" + id
++		}
++		return
+ 	default:
+ 		return
+ 	}

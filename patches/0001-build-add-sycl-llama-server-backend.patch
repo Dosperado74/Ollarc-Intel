@@ -1,0 +1,67 @@
+diff --git a/cmake/local.cmake b/cmake/local.cmake
+index 3c7d18f..21c28a7 100644
+--- a/cmake/local.cmake
++++ b/cmake/local.cmake
+@@ -7,7 +7,7 @@
+ include(ExternalProject)
+ 
+ set(OLLAMA_LLAMA_BACKENDS "" CACHE STRING
+-    "Semicolon-separated llama-server GPU backends to build: cuda_v12;cuda_v13;rocm_v7_1;rocm_v7_2;vulkan;cuda_jetpack5;cuda_jetpack6")
++    "Semicolon-separated llama-server GPU backends to build: cuda_v12;cuda_v13;rocm_v7_1;rocm_v7_2;vulkan;sycl;cuda_jetpack5;cuda_jetpack6")
+ set(_ollama_mlx_backends_doc "Semicolon-separated MLX backends to build: cuda_v13;metal_v3;metal_v4")
+ set(OLLAMA_VERSION "0.0.0" CACHE STRING "Ollama version embedded in the local Go binary")
+ set(OLLAMA_PAYLOAD_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH
+@@ -821,6 +821,16 @@ if(OLLAMA_HAVE_LLAMA_SERVER)
+                     -DGGML_VULKAN=ON
+                     -DOLLAMA_GPU_BACKEND=vulkan)
+             list(APPEND _backend_targets ollama-llama-server-vulkan)
++        elseif(_backend STREQUAL "sycl")
++            # Intel oneAPI SYCL backend (Arc dGPU, Arc/Xe iGPU). Requires the
++            # oneAPI compilers (icx/icpx), oneMKL and oneDNN in the environment.
++            # GGML_SYCL_* cache variables (e.g. GGML_SYCL_DEVICE_ARCH) are
++            # forwarded automatically by ollama_add_llama_server_build.
++            ollama_add_llama_server_build(sycl
++                PRESET sycl
++                RUNNER_DIR sycl
++                TARGETS ggml-sycl)
++            list(APPEND _backend_targets ollama-llama-server-sycl)
+         elseif(_backend STREQUAL "cuda_jetpack5")
+             if(CMAKE_CUDA_ARCHITECTURES)
+                 set(_cuda_preset llama_cuda_jetpack5_user_arch)
+diff --git a/llama/server/CMakePresets.json b/llama/server/CMakePresets.json
+index b2a9afd..022ccb1 100644
+--- a/llama/server/CMakePresets.json
++++ b/llama/server/CMakePresets.json
+@@ -230,6 +230,20 @@
+         "OLLAMA_RUNNER_DIR": "vulkan",
+         "OLLAMA_GPU_BACKEND": "vulkan"
+       }
++    },
++    {
++      "name": "sycl",
++      "inherits": ["default"],
++      "binaryDir": "${sourceDir}/../../build/llama-server-sycl",
++      "cacheVariables": {
++        "CMAKE_C_COMPILER": "icx",
++        "CMAKE_CXX_COMPILER": "icpx",
++        "GGML_SYCL": "ON",
++        "GGML_SYCL_TARGET": "INTEL",
++        "GGML_SYCL_F16": "ON",
++        "OLLAMA_RUNNER_DIR": "sycl",
++        "OLLAMA_GPU_BACKEND": "sycl"
++      }
+     }
+   ],
+   "buildPresets": [
+@@ -332,6 +346,11 @@
+       "name": "vulkan",
+       "configurePreset": "vulkan",
+       "targets": ["ggml-vulkan"]
++    },
++    {
++      "name": "sycl",
++      "configurePreset": "sycl",
++      "targets": ["ggml-sycl"]
+     }
+   ]
+ }

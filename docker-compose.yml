@@ -1,0 +1,49 @@
+# ollarc-intel: Ollama (Intel GPU / SYCL) + Open WebUI
+#
+#   docker compose up -d
+#   docker compose exec ollama ollama pull qwen3:8b
+#   -> http://<host>:3000
+#
+# Image tags (set OLLARC_TAG in .env):
+#   latest        JIT, every Intel GPU (Meteor/Arrow/Lunar Lake, Arc A/B)
+#   latest-arl-h  ahead-of-time for Arrow Lake-H (Core Ultra 200H, e.g. 285H/255H, Arc 140T/130T)
+
+services:
+  ollama:
+    image: ghcr.io/dosperado74/ollarc-intel:${OLLARC_TAG:-latest}
+    container_name: ollama
+    restart: unless-stopped
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      # numeric GID of the "render" group on the host: getent group render | cut -d: -f3
+      - "${RENDER_GID:-993}"
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_CONTEXT_LENGTH=8192
+      # optional tuning, see docs/tuning.md:
+      # - OLLAMA_FLASH_ATTENTION=1
+      # - OLLAMA_KV_CACHE_TYPE=q8_0
+      # - GGML_SYCL_DYNAMIC_PRECISION=BF16   # if a model produces garbage/NaN with F16
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=true
+    volumes:
+      - open-webui:/app/backend/data
+
+volumes:
+  ollama:
+  open-webui:
