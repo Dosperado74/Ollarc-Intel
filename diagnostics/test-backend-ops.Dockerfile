@@ -20,6 +20,9 @@ ARG LLAMA_CPP_VERSION=b11963
 RUN git -c advice.detachedHead=false clone --depth 1 --branch "${LLAMA_CPP_VERSION}" \
         https://github.com/ggml-org/llama.cpp /llama.cpp
 WORKDIR /llama.cpp
+# extra test cases with the exact gpt-oss expert shapes
+COPY diagnostics/test-backend-ops-gptoss.patch /tmp/
+RUN git apply /tmp/test-backend-ops-gptoss.patch
 RUN cmake -B build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx \

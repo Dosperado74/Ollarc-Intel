@@ -5,7 +5,7 @@
 set -uo pipefail
 IMG="${IMG:-ollarc-tbo}"
 GID="$(stat -c %g /dev/dri/renderD128)"
-OPS=("$@"); [[ ${#OPS[@]} -gt 0 ]] || OPS=(MUL_MAT_ID ADD_ID GLU SOFT_MAX FLASH_ATTN_EXT MUL_MAT ROPE RMS_NORM ARGSORT GET_ROWS)
+OPS=("$@"); [[ ${#OPS[@]} -gt 0 ]] || OPS=(MUL_MAT_ID ADD_ID GLU SWIGLU_OAI MUL_MAT_VEC_FUSION SOFT_MAX FLASH_ATTN_EXT MUL_MAT ROPE RMS_NORM ARGSORT GET_ROWS)
 for op in "${OPS[@]}"; do
   out=$(docker run --rm --device /dev/dri --group-add "$GID" "$IMG" test -b SYCL0 -o "$op" 2>&1 | sed -E 's/\x1b\[[0-9;]*m//g')
   pass=$(grep -cE "OK$" <<<"$out"); fail=$(grep -cE "FAIL$" <<<"$out")
