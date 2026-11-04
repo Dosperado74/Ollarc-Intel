@@ -8,17 +8,24 @@ URL="${OLLAMA_URL:-http://localhost:11434}"
 MODELS=("$@"); [[ ${#MODELS[@]} -gt 0 ]] || MODELS=(llama3.2:3b qwen3:8b)
 PROMPT="${PROMPT:-Explain in about 300 words how a transformer language model generates text.}"
 RUNS="${RUNS:-3}"
+NUM_PREDICT="${NUM_PREDICT:-256}"
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 
 printf '%-28s %10s %10s %10s\n' MODEL "prefill" "decode" "load(s)"
 for m in "${MODELS[@]}"; do
-  curl -fsS "$URL/api/pull" -d "{\"model\":\"$m\",\"stream\":false}" >/dev/null
+  if ! curl -fsS "$URL/api/show" -d "{\"model\":\"$m\"}" >/dev/null 2>&1; then
+    echo "  pulling $m ..." >&2
+    curl -fsS "$URL/api/pull" -d "{\"model\":\"$m\",\"stream\":false}" >/dev/null
+  fi
   # warm-up (model load + SYCL kernel JIT)
+  echo "  $m: loading / warm-up ..." >&2
   curl -fsS "$URL/api/generate" -d "{\"model\":\"$m\",\"prompt\":\"hi\",\"stream\":false,\"options\":{\"num_predict\":1}}" >/dev/null
   pp=0; tg=0; ld=0
-  for _ in $(seq "$RUNS"); do
+  for i in $(seq "$RUNS"); do
+    echo "  $m: run $i/$RUNS (${NUM_PREDICT} tokens) ..." >&2
     r=$(curl -fsS "$URL/api/generate" -d "$(jq -nc --arg m "$m" --arg p "$PROMPT" \
-          '{model:$m,prompt:$p,stream:false,options:{num_predict:256,seed:1,temperature:0}}')")
+          --argjson n "$NUM_PREDICT" \
+          '{model:$m,prompt:$p,stream:false,think:false,options:{num_predict:$n,seed:1,temperature:0}}')")
     pp=$(jq -n --argjson a "$pp" --argjson r "$r" '$a + ($r.prompt_eval_count / ($r.prompt_eval_duration/1e9))')
     tg=$(jq -n --argjson a "$tg" --argjson r "$r" '$a + ($r.eval_count / ($r.eval_duration/1e9))')
     ld=$(jq -n --argjson a "$ld" --argjson r "$r" '$a + ($r.load_duration/1e9)')
