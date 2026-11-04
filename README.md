@@ -16,8 +16,6 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 ```bash
 git clone https://github.com/Dosperado74/ollarc-intel && cd ollarc-intel
 echo "RENDER_GID=$(getent group render | cut -d: -f3)" > .env
-# Arrow Lake-H only (Core Ultra 200H): ahead-of-time compiled kernels, faster first load
-# echo "OLLARC_TAG=latest-arl-h" >> .env
 docker compose up -d
 docker compose exec ollama ollama pull qwen3:8b
 ```
@@ -36,8 +34,12 @@ docker compose exec ollama ollama ps                        # -> PROCESSOR 100% 
 | Tag | Kernels | For |
 |---|---|---|
 | `ghcr.io/dosperado74/ollarc-intel:latest` | JIT (SPIR-V) | every supported Intel GPU |
-| `ghcr.io/dosperado74/ollarc-intel:latest-arl-h` | AOT `arl-h` | Arrow Lake-H iGPU (Arc 140T / 130T) |
-| `:<ollama-version>[-arl-h]` | | pinned versions, e.g. `0.40.14-arl-h` |
+| `:<ollama-version>` | JIT | pinned versions, e.g. `0.40.14` |
+
+> **No ahead-of-time (AOT) images.** llama.cpp builds AOT SYCL kernels without
+> support for GPU buffers larger than 4 GB, so every model above ~4 GB (gpt-oss,
+> Qwen 27B, …) produces garbage such as `GGGG…`. The former `latest-arl-h` tag now
+> points to the JIT image. The first load of a model compiles its kernels once.
 
 ## How it works
 
@@ -54,7 +56,6 @@ The patches are small on purpose so they keep applying to new Ollama releases. I
 
 ```bash
 docker build -t ollarc-intel .                                             # current UPSTREAM_VERSION, JIT
-docker build --build-arg SYCL_DEVICE_ARCH=arl-h -t ollarc-intel:arl-h .   # AOT for Arrow Lake-H
 docker build --build-arg OLLAMA_VERSION=v0.40.14 --build-arg LLAMA_CPP_VERSION=b12086 .
 ```
 

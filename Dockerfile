@@ -3,12 +3,13 @@
 # ollarc-intel — upstream Ollama + llama.cpp SYCL backend for Intel GPUs
 #
 #   docker build -t ollarc-intel .
-#   docker build --build-arg OLLAMA_VERSION=v0.40.14 --build-arg SYCL_DEVICE_ARCH=arl-h -t ollarc-intel:arl-h .
+#   docker build --build-arg OLLAMA_VERSION=v0.40.14 -t ollarc-intel:0.40.14 .
 #
 # OLLAMA_VERSION    upstream git tag of github.com/ollama/ollama (default: see UPSTREAM_VERSION)
 # LLAMA_CPP_VERSION empty = the llama.cpp build Ollama pins; e.g. b12086 for a newer SYCL backend
-# SYCL_DEVICE_ARCH empty = JIT (works on every Intel GPU, slower first load)
-#                  arl-h / mtl-h / lnl-m / bmg-g21 / ... = ahead-of-time for one GPU family
+# SYCL_DEVICE_ARCH empty = JIT (default, works on every Intel GPU).
+#                  Do NOT set it for normal use: llama.cpp builds AOT kernels without
+#                  >4 GB buffer support, so models above ~4 GB compute garbage.
 
 ARG ONEAPI_VERSION=2026.2.0
 ARG UBUNTU_VERSION=26.04

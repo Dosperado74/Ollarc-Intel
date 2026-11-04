@@ -31,6 +31,7 @@ Set all variables in the `environment:` block of the `ollama` service.
 
 ## Slow first start?
 
-The universal image (`latest`) compiles the GPU kernels the first time a model is loaded
-(JIT). On Arrow Lake-H, `latest-arl-h` avoids this because the kernels are precompiled.
+The image compiles the GPU kernels the first time a model is loaded (JIT). Precompiled
+(AOT) kernels would avoid that, but llama.cpp builds them without support for buffers
+larger than 4 GB, so they break every model above ~4 GB.
 llama.cpp explicitly does **not** recommend `SYCL_CACHE_PERSISTENT=1`.

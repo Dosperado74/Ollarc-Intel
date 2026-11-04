@@ -59,7 +59,7 @@ jobs:
           build=true
           if [ "${{ github.event_name }}" = "schedule" ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force }}" != "true" ]; }; then
             echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin >/dev/null
-            if docker manifest inspect "$image:${version#v}-arl-h" >/dev/null 2>&1; then
+            if docker manifest inspect "$image:${version#v}" >/dev/null 2>&1; then
               build=false
             fi
           fi
@@ -71,14 +71,6 @@ jobs:
     if: needs.resolve.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - flavor: ""        # JIT: every Intel GPU
-            arch: ""
-          - flavor: "-arl-h"  # AOT: Arrow Lake-H (Core Ultra 200H, Arc 140T/130T)
-            arch: "arl-h"
     steps:
       - name: Free disk space
         run: |
@@ -98,7 +90,8 @@ jobs:
         run: |
           v="${{ needs.resolve.outputs.version }}"; v="${v#v}"
           image="${IMAGE,,}"
-          echo "tags=$image:$v${{ matrix.flavor }},$image:latest${{ matrix.flavor }}" >> "$GITHUB_OUTPUT"
+          # -arl-h tags used to be AOT builds, which break models > 4 GB; keep them as aliases
+          echo "tags=$image:$v,$image:latest,$image:$v-arl-h,$image:latest-arl-h" >> "$GITHUB_OUTPUT"
 
       - uses: docker/build-push-action@v6
         with:
@@ -107,10 +100,9 @@ jobs:
           platforms: linux/amd64
           build-args: |
             OLLAMA_VERSION=${{ needs.resolve.outputs.version }}
-            SYCL_DEVICE_ARCH=${{ matrix.arch }}
           tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha,scope=ollarc${{ matrix.flavor }}
-          cache-to: type=gha,mode=max,scope=ollarc${{ matrix.flavor }}
+          cache-from: type=gha,scope=ollarc
+          cache-to: type=gha,mode=max,scope=ollarc
 
   release:
     needs: [resolve, image]
@@ -137,8 +129,7 @@ jobs:
           gh release create "$v" --title "ollarc-intel $v" --notes "Upstream: https://github.com/ollama/ollama/releases/tag/$v
 
           \`\`\`
-          docker pull $image:${v#v}         # JIT, every Intel GPU
-          docker pull $image:${v#v}-arl-h   # Arrow Lake-H (Core Ultra 200H)
+          docker pull $image:${v#v}
           \`\`\`"
 
   report-failure:

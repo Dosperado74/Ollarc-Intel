@@ -4,9 +4,8 @@
 #   docker compose exec ollama ollama pull qwen3:8b
 #   -> http://<host>:3000
 #
-# Image tags (set OLLARC_TAG in .env):
-#   latest        JIT, every Intel GPU (Meteor/Arrow/Lunar Lake, Arc A/B)
-#   latest-arl-h  ahead-of-time for Arrow Lake-H (Core Ultra 200H, e.g. 285H/255H, Arc 140T/130T)
+# Image tags (set OLLARC_TAG in .env): latest, or a pinned Ollama version such as 0.40.14.
+# Every Intel GPU uses the same image (Meteor/Arrow/Lunar Lake, Arc A/B).
 
 services:
   ollama:

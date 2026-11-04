@@ -66,8 +66,6 @@ ls -l /dev/dri
 
 git clone https://github.com/Dosperado74/ollarc-intel && cd ollarc-intel
 echo "RENDER_GID=$(stat -c %g /dev/dri/renderD128)" > .env
-# Core Ultra 200H only (Arrow Lake-H, e.g. 285H/255H, PCI ID 8086:7d51):
-# echo "OLLARC_TAG=latest-arl-h" >> .env
 docker compose up -d
 docker compose logs ollama | grep -iE 'ollarc|sycl|inference compute'
 ```
@@ -131,5 +129,6 @@ Short version. The iGPU is gone from the host afterwards:
 | host has no `/dev/dri`, driver is `vfio-pci` | the iGPU is still reserved for passthrough, see above |
 | `Permission denied` on `/dev/dri/renderD128` | `RENDER_GID` does not match the GID of `renderD128` inside the container |
 | `library=cpu` in the logs | run `docker compose exec ollama sycl-ls`; if it lists no `level_zero:gpu`, the container cannot reach the GPU |
-| first model load is slow | JIT compilation of the SYCL kernels; `latest-arl-h` (AOT) avoids it on Arrow Lake-H |
+| first model load is slow | one-time JIT compilation of the SYCL kernels for that model |
+| model outputs `GGGG…` or loops endlessly | you run an old `latest-arl-h` (AOT) image: `docker compose pull` (AOT kernels break models > 4 GB) |
 | OOM / container gets killed | raise the LXC RAM limit, because iGPU memory counts as RAM |
