@@ -9,7 +9,7 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 - ✅ newest toolchain: oneAPI 2026.2, the llama.cpp build that Ollama pins (newer ones selectable)
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
-> German setup guide for Proxmox: [docs/proxmox.md](docs/proxmox.md)
+> Running on Proxmox VE? See the [Proxmox guide](docs/proxmox.md) (LXC recommended).
 
 ## Quick start (Docker + Open WebUI)
 

@@ -1,35 +1,35 @@
-# Tuning für Intel iGPUs
+# Tuning for Intel iGPUs
 
-Alle Variablen werden im `environment:`-Block des `ollama`-Service gesetzt.
+Set all variables in the `environment:` block of the `ollama` service.
 
 ## Ollama
 
-| Variable | Empfehlung | Wirkung |
+| Variable | Recommendation | Effect |
 |---|---|---|
-| `OLLAMA_FLASH_ATTENTION` | `1` | Flash Attention im SYCL-Backend; weniger Speicher für lange Kontexte |
-| `OLLAMA_KV_CACHE_TYPE` | `q8_0` (braucht FA) | halbiert den KV-Cache-Speicher, minimal Qualitätsverlust |
-| `OLLAMA_CONTEXT_LENGTH` | `8192` | Standard-Kontext; größer = mehr RAM |
-| `OLLAMA_KEEP_ALIVE` | `30m` | Modell bleibt geladen, kein erneutes Laden/JIT |
-| `OLLAMA_NUM_PARALLEL` | `1` | auf einer iGPU meist am schnellsten |
+| `OLLAMA_FLASH_ATTENTION` | `1` | flash attention in the SYCL backend; less memory for long contexts |
+| `OLLAMA_KV_CACHE_TYPE` | `q8_0` (needs FA) | halves KV cache memory with minimal quality loss |
+| `OLLAMA_CONTEXT_LENGTH` | `8192` | default context; larger means more RAM |
+| `OLLAMA_KEEP_ALIVE` | `30m` | keeps the model loaded, so there is no reload or JIT |
+| `OLLAMA_NUM_PARALLEL` | `1` | usually fastest on an iGPU |
 
 ## SYCL / oneAPI
 
-| Variable | Default im Image | Wirkung |
+| Variable | Image default | Effect |
 |---|---|---|
-| `ONEAPI_DEVICE_SELECTOR` | `level_zero:*` | welche GPUs sichtbar sind, z. B. `level_zero:0` |
-| `ZES_ENABLE_SYSMAN` | `1` | echte Free-Memory-Abfrage → besseres Scheduling |
-| `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS` | `1` | Allokationen > 4 GiB (große Modelle) |
-| `GGML_SYCL_DYNAMIC_PRECISION` | `F16` | `BF16`, wenn ein Modell Unsinn/NaN ausgibt (F16-Überlauf) |
+| `ONEAPI_DEVICE_SELECTOR` | `level_zero:*` | which GPUs are visible, e.g. `level_zero:0` |
+| `ZES_ENABLE_SYSMAN` | `1` | real free-memory query, which improves scheduling |
+| `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS` | `1` | allows allocations > 4 GiB (large models) |
+| `GGML_SYCL_DYNAMIC_PRECISION` | `F16` | set to `BF16` if a model outputs garbage/NaN (F16 overflow) |
 
-## Modellwahl
+## Choosing models
 
-- Die iGPU ist bei der Token-Generierung **speicherbandbreiten-limitiert**: kleinere Quants = schneller.
-- Das SYCL-Backend hat die meisten Optimierungen für **`Q4_0`** (Reorder + XMX). Viele Modelle
-  gibt es in der Ollama-Registry auch als `…-q4_0`-Tag, z. B. `ollama pull llama3.1:8b-instruct-q4_0`.
-- `Q4_K_M` (Ollama-Standard) läuft ebenfalls, ist aber auf SYCL meist etwas langsamer als `Q4_0`.
+- Token generation on an iGPU is **memory-bandwidth bound**: smaller quants are faster.
+- The SYCL backend has the most optimizations for **`Q4_0`** (reorder + XMX). Many models
+  in the Ollama registry also have a `…-q4_0` tag, e.g. `ollama pull llama3.1:8b-instruct-q4_0`.
+- `Q4_K_M` (the Ollama default) works too, but is usually a bit slower than `Q4_0` on SYCL.
 
-## Erster Start langsam?
+## Slow first start?
 
-Das universelle Image (`latest`) kompiliert die GPU-Kernels beim ersten Laden eines Modells
-(JIT). Auf Arrow Lake-H vermeidet `latest-arl-h` das (Kernels sind vorkompiliert).
-`SYCL_CACHE_PERSISTENT=1` wird von llama.cpp ausdrücklich **nicht** empfohlen.
+The universal image (`latest`) compiles the GPU kernels the first time a model is loaded
+(JIT). On Arrow Lake-H, `latest-arl-h` avoids this because the kernels are precompiled.
+llama.cpp explicitly does **not** recommend `SYCL_CACHE_PERSISTENT=1`.
