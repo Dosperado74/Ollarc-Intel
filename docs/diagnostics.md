@@ -72,3 +72,17 @@ rm docker-compose.override.yml   # undo
 ```
 
 The useful ggml-sycl switches are listed in [tuning.md](tuning.md).
+
+## Upstream reproduction: AOT builds and models > 4 GB
+
+Plain llama.cpp (no Ollama) built three times — JIT, AOT `arl-h` as upstream ships it,
+and AOT with [`900-sycl-aot-4gb-buffers.patch`](../patches/llama.cpp/900-sycl-aot-4gb-buffers.patch) —
+run on the official `ggml-org/gpt-oss-20b-GGUF`:
+
+```bash
+docker build -t ollarc-repro -f diagnostics/repro-aot-4gb.Dockerfile .   # 30–60 min
+./diagnostics/repro-aot-4gb.sh                                          # downloads ~12 GB once
+```
+
+Expected on an Arc 140T: `jit` and `aot-fixed` answer normally, `aot` prints garbage.
+
