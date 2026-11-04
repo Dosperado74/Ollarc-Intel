@@ -31,7 +31,7 @@ Problems found on the way, their causes and fixes are in
 [docs/known-issues.md](docs/known-issues.md). If something does not work, start with
 [docs/diagnostics.md](docs/diagnostics.md).
 
-## Quick start (Docker + Open WebUI)
+## Quick start (Docker + Open WebUI + web search)
 
 ```bash
 git clone https://github.com/Dosperado74/ollarc-intel && cd ollarc-intel
@@ -111,6 +111,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 |---|---|
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
+| [docs/websearch.md](docs/websearch.md) | web search with the bundled SearXNG, models that search by themselves |
 | [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, `test-backend-ops`, tensor bisection |
 | [docs/known-issues.md](docs/known-issues.md) | everything found so far, with causes and fixes |
 | [docs/upstream/](docs/upstream/) | reports prepared for upstream projects |

@@ -1,0 +1,19 @@
+# SearXNG for Open WebUI web search (only reachable inside the compose network).
+# Docs: https://docs.searxng.org/admin/settings/
+use_default_settings: true
+
+server:
+  # SearXNG is not published outside the compose network; change it if you publish it
+  secret_key: "ollarc-intel-change-me"
+  limiter: false        # Open WebUI is the only client
+  image_proxy: false
+
+search:
+  safe_search: 0
+  default_lang: "de"
+  formats:
+    - html
+    - json              # required by Open WebUI
+
+ui:
+  static_use_hash: true
