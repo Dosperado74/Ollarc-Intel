@@ -17,7 +17,7 @@ if docker ps --format '{{.Names}}' | grep -qx ollama; then
   for m in $(docker exec ollama ollama ps | awk 'NR>1{print $1}'); do docker exec ollama ollama stop "$m" >/dev/null; done
 fi
 
-docker run --rm --device /dev/dri --group-add "$GID" \
+docker run --rm -i --device /dev/dri --group-add "$GID" \
   -v "$CACHE":/root/.cache/llama.cpp -e MODEL="$MODEL" "$IMG" bash -s <<'EOS'
 set -u
 PORT=18080
