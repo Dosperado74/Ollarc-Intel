@@ -1,5 +1,9 @@
 # Upstream report: llama.cpp SYCL AOT builds break models > 4 GB
 
+**Reported:** [ggml-org/llama.cpp#31685](https://github.com/ggml-org/llama.cpp/issues/31685).
+Once it is fixed upstream and Ollama pins that llama.cpp build,
+`patches/llama.cpp/900-sycl-aot-4gb-buffers.patch` can be dropped.
+
 Ready to post at <https://github.com/ggml-org/llama.cpp/issues/new>.
 Title and body below.
 

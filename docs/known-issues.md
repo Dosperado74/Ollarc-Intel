@@ -78,7 +78,8 @@ produced correct output.
   (`-options -ze-intel-greater-than-4GB-buffer-required`). Verified: with the patched
   AOT image, `gpt-oss:20b` gives a correct answer on an Arc 140T, where the unpatched
   AOT image printed only `GGGG…`. `latest-arl-h` is built with it.
-- Upstream report: [`docs/upstream/llama.cpp-sycl-aot-4gb.md`](upstream/llama.cpp-sycl-aot-4gb.md).
+- Upstream report: [ggml-org/llama.cpp#31685](https://github.com/ggml-org/llama.cpp/issues/31685)
+  (notes: [`docs/upstream/llama.cpp-sycl-aot-4gb.md`](upstream/llama.cpp-sycl-aot-4gb.md)).
 
 ## 4. Flash attention with head size 256
 
