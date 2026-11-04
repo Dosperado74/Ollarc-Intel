@@ -17,7 +17,8 @@ Set all variables in the `environment:` block of the `ollama` service.
 | Variable | Image default | Effect |
 |---|---|---|
 | `ONEAPI_DEVICE_SELECTOR` | `level_zero:*` | which GPUs are visible, e.g. `level_zero:0` |
-| `ZES_ENABLE_SYSMAN` | `1` | real free-memory query, which improves scheduling |
+| `GGML_SYCL_GET_MEM_API` | `1` | free memory via SYCL; `0` uses Level Zero Sysman, which on iGPUs reports only the host's unused RAM (page cache and container limits ignored) |
+| `ZES_ENABLE_SYSMAN` | `0` | Level Zero Sysman; only needed for multi-GPU setups with `GGML_SYCL_GET_MEM_API=0` |
 | `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS` | `1` | allows allocations > 4 GiB (large models) |
 | `GGML_SYCL_DYNAMIC_PRECISION` | `F16` | set to `BF16` if a model outputs garbage/NaN (F16 overflow) |
 

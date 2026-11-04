@@ -121,10 +121,14 @@ LABEL org.opencontainers.image.title="ollarc-intel" \
       io.ollarc.sycl-device-arch="${SYCL_DEVICE_ARCH}"
 
 # Sensible defaults for Intel iGPUs (all overridable at runtime)
+# GGML_SYCL_GET_MEM_API=1: query free memory via SYCL instead of Level Zero
+# Sysman. On iGPUs Sysman reports the host's MemFree (no page cache, ignores
+# container limits), so Ollama would plan far too little GPU memory.
 ENV OLLAMA_HOST=0.0.0.0:11434 \
     OLLAMA_MODELS=/root/.ollama/models \
     ONEAPI_DEVICE_SELECTOR=level_zero:* \
-    ZES_ENABLE_SYSMAN=1 \
+    GGML_SYCL_GET_MEM_API=1 \
+    ZES_ENABLE_SYSMAN=0 \
     UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1
 
 EXPOSE 11434
