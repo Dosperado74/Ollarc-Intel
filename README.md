@@ -10,6 +10,7 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
 > Running on Proxmox VE? See the [Proxmox guide](docs/proxmox.md) (LXC recommended).
+> Plain Linux host (Debian, Ubuntu, …)? See [host setup](docs/host-setup.md): kernel and GPU firmware.
 
 ## Status
 
@@ -108,6 +109,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 
 | Document | Content |
 |---|---|
+| [docs/host-setup.md](docs/host-setup.md) | plain Linux host without Proxmox: kernel, GPU firmware, Docker |
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
 | [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, trying runtime switches |
