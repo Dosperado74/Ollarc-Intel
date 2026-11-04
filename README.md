@@ -13,7 +13,7 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 
 ## Status
 
-Tested on an ASUS NUC with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, Ollama v0.40.14:
+Tested on an ASUS NUC 14 Pro+ with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, Ollama v0.40.14:
 
 | Model | Result | Prefill | Decode |
 |---|---|---|---|

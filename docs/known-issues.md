@@ -1,6 +1,6 @@
 # Known issues and findings
 
-Everything below was found while bringing up ollarc-intel on an **ASUS NUC with a
+Everything below was found while bringing up ollarc-intel on an **ASUS NUC 14 Pro+ with a
 Core Ultra 9 285H (Arrow Lake-H, Arc 140T iGPU, PCI ID `8086:7d51`)** running
 Proxmox VE 9 (kernel 7.0, `i915`), an unprivileged Debian 13 LXC and Docker.
 Ollama v0.40.14, llama.cpp b11963, oneAPI 2026.2.
