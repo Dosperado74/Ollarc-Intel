@@ -17,7 +17,7 @@ Tested on an ASUS NUC with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, 
 
 | Model | Result | Prefill | Decode |
 |---|---|---|---|
-| `llama3.2:3b` | ✅ 100 % GPU | – | 22.7 tok/s (short prompt) |
+| `llama3.2:3b` (Q4_K_M) | ✅ 100 % GPU, `latest-arl-h` | – | **24.3 tok/s** |
 | `gpt-oss:20b` (MXFP4) | ✅ 100 % GPU, `latest-arl-h` | **1106 tok/s** (6549-token prompt) | **12.8 tok/s** (empty context), 10.6 tok/s (6.5K context) |
 | `qwen3.8:27b` (Q4) | ✅ 100 % GPU (66/66 layers) | – | dense 27B, slow on any iGPU |
 
