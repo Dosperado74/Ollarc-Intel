@@ -9,8 +9,18 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 - ✅ newest toolchain: oneAPI 2026.2, the llama.cpp build that Ollama pins (newer ones selectable)
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
-> **Two ways to run it:** directly on a Linux host (Debian, Ubuntu, Fedora, …) or in a
-> Proxmox VE LXC. Both are covered in the Quick start below.
+> [!IMPORTANT]
+> **No Proxmox? Install the Intel GPU firmware on the host first.** Without it the iGPU
+> cannot run compute work and Ollama silently falls back to the CPU.
+>
+> ```bash
+> # Debian 13 (enable "non-free-firmware" in the apt sources first)
+> sudo apt install firmware-intel-graphics && sudo update-initramfs -u -k all && sudo reboot
+> # Debian 12: firmware-misc-nonfree instead · Ubuntu / Fedora / Proxmox VE: already included
+> ```
+>
+> Runs directly on a Linux host (Debian, Ubuntu, Fedora, …) or in a Proxmox VE LXC, see
+> [Quick start](#quick-start-docker--open-webui).
 
 ## Status
 
