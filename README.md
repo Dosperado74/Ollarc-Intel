@@ -5,7 +5,7 @@
 Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no longer developed, Vulkan leaves a lot of performance on Intel iGPUs unused, and OpenVINO needs a separate model workflow. ollarc-intel takes the current Ollama release unchanged, adds a small patch set for a SYCL GPU backend, and rebuilds automatically whenever Ollama ships a new version.
 
 - ✅ normal Ollama: `ollama pull`, `ollama run`, the API, Open WebUI. Models come straight from the Ollama registry, so you don't need to copy GGUF files by hand
-- ✅ Intel Arc / Xe iGPUs: Meteor Lake, **Arrow Lake** (Core Ultra 200H, e.g. 285H in the ASUS NUC 15 Pro / Pro+), Lunar Lake, Arc A-/B-series
+- ✅ Intel Arc / Xe iGPUs: Meteor Lake, **Arrow Lake** (Core Ultra 200H, e.g. 285H, 265H, 255H), Lunar Lake, Arc A-/B-series
 - ✅ newest toolchain: oneAPI 2026.2, the llama.cpp build that Ollama pins (newer ones selectable)
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
