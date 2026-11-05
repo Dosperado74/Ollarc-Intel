@@ -78,9 +78,19 @@ jobs:
           # JIT kernels: every Intel GPU
           - arch: ""
             suffixes: ""
+            cache: "ollarc"
           # AOT kernels for Arrow Lake-H with the >4 GB buffer fix (verified on an Arc 140T)
           - arch: "arl-h"
             suffixes: "-arl-h"
+            cache: "ollarcarl-h"
+          # AOT kernels for dedicated Arc A-series cards: ACM-G10 (A770/A750/A580), ACM-G11 (A380/A310)
+          - arch: "acm-g10,acm-g11"
+            suffixes: "-dg2"
+            cache: "ollarc-dg2"
+          # AOT kernels for dedicated Arc B-series cards: BMG-G21 (B580/B570, Arc Pro B50/B60)
+          - arch: "bmg-g21"
+            suffixes: "-bmg"
+            cache: "ollarc-bmg"
     steps:
       - name: Free disk space
         run: |
@@ -115,8 +125,9 @@ jobs:
             OLLAMA_VERSION=${{ needs.resolve.outputs.version }}
             SYCL_DEVICE_ARCH=${{ matrix.arch }}
           tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha,scope=ollarc${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=ollarc${{ matrix.arch }}
+          # explicit scope: matrix.arch may contain commas, which would break the cache spec
+          cache-from: type=gha,scope=${{ matrix.cache }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache }}
 
   release:
     needs: [resolve, image]
