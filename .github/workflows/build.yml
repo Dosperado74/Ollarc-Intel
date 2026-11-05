@@ -150,12 +150,26 @@ jobs:
         run: |
           v="${{ needs.resolve.outputs.version }}"
           image="${IMAGE,,}"
-          gh release view "$v" >/dev/null 2>&1 && exit 0
-          gh release create "$v" --title "ollarc-intel $v" --notes "Upstream: https://github.com/ollama/ollama/releases/tag/$v
-
-          \`\`\`
-          docker pull $image:${v#v}
-          \`\`\`"
+          pull() { printf 'docker pull %-48s # %s\n' "$image:${v#v}$1" "$2"; }
+          {
+            echo "Upstream: https://github.com/ollama/ollama/releases/tag/$v"
+            echo
+            echo '```'
+            pull ""       "JIT, every Intel GPU (recommended)"
+            pull "-arl-h" "Arrow Lake-H iGPU (Core Ultra 200H, Arc 140T / 130T)"
+            pull "-dg2"   "dedicated Arc A-series (A770, A750, A580, A380, A310)"
+            pull "-bmg"   "dedicated Arc B-series (B580, B570, Arc Pro B50 / B60)"
+            echo '```'
+            echo
+            echo "The same tags without the version (\`latest\`, \`latest-arl-h\`, \`latest-dg2\`, \`latest-bmg\`) always point to the newest build."
+            echo "Dedicated Arc cards: [docs/arc-dgpu.md](https://github.com/${{ github.repository }}/blob/main/docs/arc-dgpu.md) · Share your numbers: [benchmark form](https://github.com/${{ github.repository }}/issues/new?template=benchmark.yml)"
+          } > notes.md
+          # existing release (e.g. a rebuild after new image variants): refresh its notes
+          if gh release view "$v" >/dev/null 2>&1; then
+            gh release edit "$v" --notes-file notes.md
+          else
+            gh release create "$v" --title "ollarc-intel $v" --notes-file notes.md
+          fi
 
   report-failure:
     needs: [resolve, image]
