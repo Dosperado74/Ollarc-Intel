@@ -5,7 +5,8 @@
 Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no longer developed, Vulkan leaves a lot of performance on Intel iGPUs unused, and OpenVINO needs a separate model workflow. ollarc-intel takes the current Ollama release unchanged, adds a small patch set for a SYCL GPU backend, and rebuilds automatically whenever Ollama ships a new version.
 
 - ✅ normal Ollama: `ollama pull`, `ollama run`, the API, Open WebUI. Models come straight from the Ollama registry, so you don't need to copy GGUF files by hand
-- ✅ Intel Arc / Xe iGPUs: Meteor Lake, **Arrow Lake** (Core Ultra 200H, e.g. 285H, 265H, 255H), Lunar Lake, Arc A-/B-series
+- ✅ made for Intel Arc / Xe iGPUs: Meteor Lake, **Arrow Lake** (Core Ultra 200H, e.g. 285H, 265H, 255H), Lunar Lake
+- ✅ dedicated Arc cards work too: A770, A750, A580, A380, B580, B570, … ([docs/arc-dgpu.md](docs/arc-dgpu.md))
 - ✅ newest toolchain: oneAPI 2026.2, the llama.cpp build that Ollama pins (newer ones selectable)
 - ✅ follows upstream: a daily CI build of every new Ollama release
 
@@ -58,6 +59,7 @@ firmware the GPU cannot run compute work and Ollama falls back to the CPU.
 | **Proxmox VE** | nothing on the host (`pve-firmware`), run it in an LXC: [Proxmox guide](docs/proxmox.md) |
 
 Check: `ls /dev/dri` shows `renderD128`. Details and troubleshooting: [docs/host-setup.md](docs/host-setup.md).
+Dedicated Arc card: also enable Resizable BAR, see [docs/arc-dgpu.md](docs/arc-dgpu.md).
 
 ### 2. Start Ollama + Open WebUI
 
@@ -74,6 +76,9 @@ Open WebUI: `http://<host>:3000` · Ollama API: `http://<host>:11434`
 On Arrow Lake-H (Core Ultra 200H, Arc 140T/130T) add `OLLARC_TAG=latest-arl-h` to `.env`
 for precompiled kernels (faster first model load).
 
+Dedicated Arc card: `OLLARC_TAG=latest-dg2` (A-series) or `latest-bmg` (B-series). If the CPU
+also has an iGPU, restrict Ollama to the Arc card, see [docs/arc-dgpu.md](docs/arc-dgpu.md#3-cpu-with-an-igpu-use-only-the-arc-card).
+
 ### 3. Check that the GPU is used
 
 ```bash
@@ -88,9 +93,12 @@ docker compose exec ollama ollama ps                        # -> PROCESSOR 100% 
 | `ghcr.io/dosperado74/ollarc-intel:latest` | JIT (SPIR-V) | **recommended**, every supported Intel GPU |
 | `:<ollama-version>` | JIT | pinned versions, e.g. `0.40.14` |
 | `:latest-arl-h` | AOT `arl-h` + 4 GB fix | Arrow Lake-H (Core Ultra 200H, Arc 140T / 130T): faster first load |
+| `:latest-dg2` | AOT `acm-g10,acm-g11` + 4 GB fix | dedicated Arc A-series (A770, A750, A580, A380, A310), not yet verified on hardware |
+| `:latest-bmg` | AOT `bmg-g21` + 4 GB fix | dedicated Arc B-series (B580, B570, Arc Pro B50 / B60), not yet verified on hardware |
 
 JIT images compile the GPU kernels once when a model is loaded; AOT images ship them
 precompiled, which only shortens that first load. Inference speed is the same.
+Every AOT tag also exists per version, e.g. `0.40.14-dg2`.
 
 > **AOT and models above 4 GB.** Upstream llama.cpp builds AOT kernels without support
 > for GPU buffers larger than 4 GB, so every model above ~4 GB (gpt-oss, Qwen 27B, …)
@@ -122,6 +130,8 @@ The patches are small on purpose so they keep applying to new Ollama releases. I
 docker build -t ollarc-intel .                                             # current UPSTREAM_VERSION, JIT
 docker build --build-arg OLLAMA_VERSION=v0.40.14 --build-arg LLAMA_CPP_VERSION=b12086 .
 docker build --build-arg SYCL_DEVICE_ARCH=arl-h -t ollarc-intel:arl-h .   # AOT for Arrow Lake-H
+docker build --build-arg SYCL_DEVICE_ARCH=acm-g10,acm-g11 -t ollarc-intel:dg2 .   # AOT for Arc A-series
+docker build --build-arg SYCL_DEVICE_ARCH=bmg-g21 -t ollarc-intel:bmg .   # AOT for Arc B-series
 ```
 
 ## Benchmark
@@ -141,6 +151,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 | Document | Content |
 |---|---|
 | [docs/host-setup.md](docs/host-setup.md) | plain Linux host without Proxmox: kernel, GPU firmware, Docker |
+| [docs/arc-dgpu.md](docs/arc-dgpu.md) | dedicated Arc A-/B-series cards: kernel, Resizable BAR, images, iGPU + dGPU, VRAM |
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
 | [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, trying runtime switches |
@@ -149,7 +160,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 
 ## Maintainer notes (CI)
 
-- `.github/workflows/build.yml` runs daily. It builds the JIT image and the Arrow Lake-H AOT image for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
+- `.github/workflows/build.yml` runs daily. It builds the JIT image and the AOT images (Arrow Lake-H, Arc A-series `dg2`, Arc B-series `bmg`) for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
 - First run: *Actions → build → Run workflow*. Afterwards set the package to **public** under *Packages → ollarc-intel → Package settings → Change visibility*.
 - The repository must be **public** for unlimited free Actions minutes.
 

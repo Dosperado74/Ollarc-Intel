@@ -7,7 +7,7 @@ in the directory that holds `docker-compose.yml`.
 
 ```bash
 docker compose exec ollama sycl-ls                            # [level_zero:gpu] Intel(R) Arc(TM) Graphics
-docker compose logs ollama | grep "inference compute"         # library=SYCL ... type=iGPU available=...
+docker compose logs ollama | grep "inference compute"         # library=SYCL ... type=iGPU (Arc card: discrete) available=...
 docker compose exec ollama ollama ps                          # PROCESSOR: 100% GPU
 docker compose logs ollama | grep -E "using device SYCL0|offloaded"   # offloaded N/N layers to GPU
 ```

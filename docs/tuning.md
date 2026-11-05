@@ -17,7 +17,7 @@ Set all variables in the `environment:` block of the `ollama` service.
 | Variable | Image default | Effect |
 |---|---|---|
 | `ONEAPI_DEVICE_SELECTOR` | `level_zero:*` | which GPUs are visible, e.g. `level_zero:0` |
-| `GGML_SYCL_GET_MEM_API` | `1` | free memory via SYCL; `0` uses Level Zero Sysman, which on iGPUs reports only the host's unused RAM (page cache and container limits ignored) |
+| `GGML_SYCL_GET_MEM_API` | `1` | free memory via SYCL; `0` uses Level Zero Sysman, which on iGPUs reports only the host's unused RAM (page cache and container limits ignored). Dedicated Arc cards: see [arc-dgpu.md §5](arc-dgpu.md#5-free-vram-reporting) |
 | `ZES_ENABLE_SYSMAN` | `0` | Level Zero Sysman; only needed for multi-GPU setups with `GGML_SYCL_GET_MEM_API=0` |
 | `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS` | `1` | allows allocations > 4 GiB (large models) |
 | `GGML_SYCL_DYNAMIC_PRECISION` | `F16` | set to `BF16` if a model outputs garbage/NaN (F16 overflow) |
@@ -33,5 +33,7 @@ Set all variables in the `environment:` block of the `ollama` service.
 
 The `latest` image compiles the GPU kernels the first time a model is loaded (JIT). On
 Arrow Lake-H (Core Ultra 200H) use `OLLARC_TAG=latest-arl-h`: its kernels are
-precompiled (AOT) for the Arc 140T / 130T. Inference speed is the same either way.
+precompiled (AOT) for the Arc 140T / 130T. Dedicated Arc cards have their own AOT
+images: `latest-dg2` (A-series) and `latest-bmg` (B-series), see
+[arc-dgpu.md](arc-dgpu.md). Inference speed is the same either way.
 llama.cpp explicitly does **not** recommend `SYCL_CACHE_PERSISTENT=1`.

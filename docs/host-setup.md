@@ -10,7 +10,8 @@ Proxmox follow [proxmox.md](proxmox.md) instead.
 ## 1. Kernel
 
 Meteor Lake and Lunar Lake need Linux 6.8 or newer, Arrow Lake Linux 6.11 or newer; a
-current distribution kernel is recommended.
+current distribution kernel is recommended. Dedicated Arc cards: A-series ≥ 6.2,
+B-series ≥ 6.12, plus Resizable BAR, see [arc-dgpu.md](arc-dgpu.md).
 
 ```bash
 uname -r

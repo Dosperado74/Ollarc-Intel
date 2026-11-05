@@ -8,7 +8,9 @@
 #   RENDER_GID=993  OLLARC_TAG=latest-arl-h  OLLAMA_CONTEXT_LENGTH=32768
 #
 # Image tags (set OLLARC_TAG in .env): latest, or a pinned Ollama version such as 0.40.14.
-# Every Intel GPU uses the same image (Meteor/Arrow/Lunar Lake, Arc A/B).
+# latest runs on every Intel GPU (Meteor/Arrow/Lunar Lake, Arc A/B). Optional precompiled
+# kernels: latest-arl-h (Arrow Lake-H iGPU), latest-dg2 (Arc A-series), latest-bmg (Arc B-series).
+# Dedicated Arc card next to an iGPU: see docs/arc-dgpu.md (ONEAPI_DEVICE_SELECTOR).
 
 services:
   ollama:
