@@ -7,8 +7,8 @@ the same images. This page only covers what is different on a dedicated card.
 > [!NOTE]
 > The maintainer has no dedicated Arc card, so the `latest-dg2` / `latest-bmg` images
 > are built by CI but **not yet verified on real hardware**. If something does not work,
-> fall back to `latest` (JIT) and please open an issue with card, kernel, image tag and
-> the output of `scripts/bench.sh`. Working results are just as welcome.
+> fall back to `latest` (JIT) and please open an issue. Working results are just as
+> welcome: [share a benchmark](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
 ## Cards and images
 

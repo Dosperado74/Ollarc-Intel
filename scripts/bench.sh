@@ -11,6 +11,7 @@ RUNS="${RUNS:-3}"
 NUM_PREDICT="${NUM_PREDICT:-256}"
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 
+echo "ollama $(curl -fsS "$URL/api/version" | jq -r .version 2>/dev/null || echo unknown)"
 printf '%-28s %10s %10s %10s\n' MODEL "prefill" "decode" "load(s)"
 for m in "${MODELS[@]}"; do
   if ! curl -fsS "$URL/api/show" -d "{\"model\":\"$m\"}" >/dev/null 2>&1; then
