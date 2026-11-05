@@ -1,0 +1,95 @@
+name: Benchmark result
+description: Share how fast ollarc-intel runs on your Intel GPU (iGPU or dedicated Arc card).
+title: "[Benchmark] <GPU>, <model>"
+labels: ["benchmark"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing! Every result helps other people pick models and hardware.
+        Run these in the directory that holds `docker-compose.yml`:
+
+        ```bash
+        ./scripts/bench.sh llama3.2:3b                 # baseline that fits every GPU, plus any models you like
+        docker compose logs ollama | grep "inference compute"
+        docker compose exec ollama ollama ps           # while the model is loaded
+        uname -r
+        ```
+
+        `llama3.2:3b` makes results comparable across GPUs; add bigger models
+        (e.g. `gpt-oss:20b`, `gemma4:e4b`) if they fit.
+
+  - type: dropdown
+    id: gpu_type
+    attributes:
+      label: GPU type
+      options:
+        - iGPU (Meteor Lake, Arrow Lake, Lunar Lake, ...)
+        - dedicated Arc A-series (A770, A750, A580, A380, ...)
+        - dedicated Arc B-series (B580, B570, Arc Pro B50 / B60, ...)
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: CPU / GPU
+      description: CPU model and GPU name, for an iGPU also the RAM (size and speed).
+      placeholder: "Core Ultra 9 285H, Arc 140T, 96 GB DDR5-5600  |  Ryzen 7 7700 + Arc B580 12 GB"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: image
+    attributes:
+      label: Image tag
+      options:
+        - latest
+        - latest-arl-h
+        - latest-dg2
+        - latest-bmg
+        - pinned version (write it under Notes)
+        - built myself (write the build args under Notes)
+    validations:
+      required: true
+
+  - type: input
+    id: host
+    attributes:
+      label: Host and kernel
+      description: Distribution, `uname -r`, and whether it runs in Proxmox LXC, a VM or directly on the host.
+      placeholder: "Proxmox VE 9 LXC (Debian 13), kernel 6.17.2-1-pve"
+    validations:
+      required: true
+
+  - type: textarea
+    id: bench
+    attributes:
+      label: Output of scripts/bench.sh
+      description: The full table, including the version line and the GPU memory lines at the end.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: GPU detection
+      description: The `inference compute` log line(s) and the output of `ollama ps`.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Changed settings (optional)
+      description: Environment variables you set in docker-compose.yml / .env, e.g. OLLAMA_FLASH_ATTENTION, OLLAMA_KV_CACHE_TYPE, OLLAMA_CONTEXT_LENGTH, ONEAPI_DEVICE_SELECTOR.
+      render: text
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (optional)
+      description: Anything else, e.g. comparison with Vulkan / OpenVINO on the same machine, problems you hit, quality of the answers.
