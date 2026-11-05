@@ -8,7 +8,8 @@
 # OLLAMA_VERSION    upstream git tag of github.com/ollama/ollama (default: see UPSTREAM_VERSION)
 # LLAMA_CPP_VERSION empty = the llama.cpp build Ollama pins; e.g. b12086 for a newer SYCL backend
 # SYCL_DEVICE_ARCH empty = JIT (default, works on every Intel GPU).
-#                  arl-h / mtl-h / lnl-m / ... = ahead-of-time kernels for one GPU family.
+#                  arl-h / mtl-h / lnl-m / ... = ahead-of-time kernels for one GPU family,
+#                  dedicated Arc cards: acm-g10,acm-g11 (A-series) / bmg-g21 (B-series).
 #                  Upstream llama.cpp builds AOT kernels without >4 GB buffer support
 #                  (models above ~4 GB compute garbage); patches/llama.cpp/900-* fixes that.
 
