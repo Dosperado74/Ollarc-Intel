@@ -39,19 +39,6 @@ Measured in Open WebUI / `scripts/bench.sh`. MoE models like gpt-oss process lon
 efficiently than short ones, because each expert gets a bigger batch. More results from other Intel
 GPUs are very welcome: [share a benchmark](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
-### Same GPU, not tested yet
-
-Every device with an Arrow Lake-H CPU (Core Ultra 200H, Arc 140T / 130T) has the same iGPU as
-the test machine and should behave the same with the `latest-arl-h` image. Faster RAM helps:
-token generation on an iGPU is memory-bandwidth bound.
-
-| Device | CPU / GPU | RAM | Status |
-|---|---|---|---|
-| UGREEN NASync iDX6011 Pro (AI NAS) | Core Ultra 7 255H, Arc 140T | 64 GB LPDDR5X-8533 (soldered) | expected to work, **not tested yet**: no unit available. Needs Docker on UGOS Pro with access to `/dev/dri` |
-
-Do you own one of these? Your [benchmark](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml)
-moves it into the tested table above.
-
 Problems found on the way, their causes and fixes are in
 [docs/known-issues.md](docs/known-issues.md). If something does not work, start with
 [docs/diagnostics.md](docs/diagnostics.md).
