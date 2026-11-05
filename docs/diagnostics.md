@@ -23,7 +23,7 @@ RUNS=1 NUM_PREDICT=64 ./scripts/bench.sh qwen3.8:latest      # quick run
 ```
 
 Prints prefill and decode tokens/s per model. Thinking is disabled for the
-measurement. Please share results in an issue: model, quant, CPU/iGPU and the numbers.
+measurement. Please share your results with the [benchmark form](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
 ## Trying runtime switches
 
