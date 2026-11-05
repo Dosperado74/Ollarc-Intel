@@ -150,6 +150,20 @@ The script prints prefill and decode tokens/s, so you can compare against Vulkan
 
 See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optimized path on SYCL, MoE models (`gpt-oss`, `…-a3b`) are much faster on an iGPU than dense models of the same size, and thinking can be switched off per model in Open WebUI.
 
+## What about the NPU?
+
+The NPU (Intel AI Boost) in Meteor / Arrow / Lunar Lake is **not used**, and that is on purpose:
+
+- llama.cpp, and therefore Ollama, has no NPU backend. On Linux the NPU is only reachable through
+  OpenVINO (kernel driver `intel_vpu`, `/dev/accel/accel0`), a separate stack with its own model format.
+- For LLMs the Arc GPU is the stronger part: on Arrow Lake-H the NPU delivers about 13 TOPS, the
+  Arc 140T about 77 TOPS. The "~100 platform TOPS" in spec sheets are CPU + GPU + NPU combined.
+- Token generation is limited by memory bandwidth, and NPU and GPU share the same RAM, so the NPU
+  could not generate tokens faster anyway.
+
+The NPU's strength is power efficiency for small, always-on models (speech recognition, embeddings,
+photo tagging), not chat-sized LLMs.
+
 ## Documentation
 
 | Document | Content |
