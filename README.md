@@ -39,6 +39,10 @@ Measured in Open WebUI / `scripts/bench.sh`. MoE models like gpt-oss process lon
 efficiently than short ones, because each expert gets a bigger batch. More results from other Intel
 GPUs are very welcome: [share a benchmark](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
+> [!NOTE]
+> **UGREEN NASync iDX6011 Pro (AI NAS):** same Arc 140T iGPU (Core Ultra 7 255H), so it should run
+> with `latest-arl-h`, but it is **not tested yet**. Details in [docs/devices.md](docs/devices.md).
+
 Problems found on the way, their causes and fixes are in
 [docs/known-issues.md](docs/known-issues.md). If something does not work, start with
 [docs/diagnostics.md](docs/diagnostics.md).
@@ -152,6 +156,7 @@ See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optim
 |---|---|
 | [docs/host-setup.md](docs/host-setup.md) | plain Linux host without Proxmox: kernel, GPU firmware, Docker |
 | [docs/arc-dgpu.md](docs/arc-dgpu.md) | dedicated Arc A-/B-series cards: kernel, Resizable BAR, images, iGPU + dGPU, VRAM |
+| [docs/devices.md](docs/devices.md) | devices with the same GPU that are not tested yet (e.g. UGREEN NASync iDX6011 Pro) |
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
 | [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, trying runtime switches |
