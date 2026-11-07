@@ -47,7 +47,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       build: ${{ steps.v.outputs.build }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: v
         env:
           GH_TOKEN: ${{ github.token }}
@@ -101,9 +101,9 @@ jobs:
           sudo docker image prune -af >/dev/null
           df -h /
 
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -119,7 +119,7 @@ jobs:
           for s in "${sfx[@]}"; do tags="$tags,$image:$v$s,$image:latest$s"; done
           echo "tags=${tags#,}" >> "$GITHUB_OUTPUT"
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -145,17 +145,17 @@ jobs:
         if: env.DOCKERHUB_USERNAME == ''
         run: echo "DOCKERHUB_USERNAME / DOCKERHUB_TOKEN not set, skipping the Docker Hub mirror" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.DOCKERHUB_USERNAME != ''
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
         if: env.DOCKERHUB_USERNAME != ''
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         if: env.DOCKERHUB_USERNAME != ''
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         if: env.DOCKERHUB_USERNAME != ''
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -188,7 +188,7 @@ jobs:
         if: env.DOCKERHUB_USERNAME != ''
         run: sed "s#{{IMAGE}}#${DOCKERHUB_USERNAME,,}/ollarc-intel#g" docs/dockerhub.md > dockerhub-readme.md
       # needs a token with Read, Write & Delete; with Read & Write only this step fails harmlessly
-      - uses: peter-evans/dockerhub-description@v4
+      - uses: peter-evans/dockerhub-description@v5
         if: env.DOCKERHUB_USERNAME != ''
         continue-on-error: true
         with:
@@ -202,7 +202,7 @@ jobs:
     needs: [resolve, image]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Bump UPSTREAM_VERSION
         run: |
           v="${{ needs.resolve.outputs.version }}"
