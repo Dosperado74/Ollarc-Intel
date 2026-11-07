@@ -182,6 +182,7 @@ photo tagging), not chat-sized LLMs.
 - `.github/workflows/build.yml` runs daily. It builds the JIT image and the AOT images (Arrow Lake-H, Arc A-series `dg2`, Arc B-series `bmg`) for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
 - First run: *Actions → build → Run workflow*. Afterwards set the package to **public** under *Packages → ollarc-intel → Package settings → Change visibility*.
 - The repository must be **public** for unlimited free Actions minutes.
+- Docker Hub mirror (optional): add the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (Docker Hub personal access token). The `dockerhub` job then copies every GHCR tag 1:1 to `docker.io/<user>/ollarc-intel` (no second build) and fills in missing tags daily. With a *Read, Write & Delete* token it also publishes [docs/dockerhub.md](docs/dockerhub.md) as the Docker Hub overview. Without the secrets the job is skipped.
 
 ## License
 
