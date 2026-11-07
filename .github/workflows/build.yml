@@ -3,6 +3,9 @@ name: build
 # Builds ghcr.io/<owner>/ollarc-intel for the newest upstream Ollama release.
 # - daily: only if no image exists yet for the newest upstream tag
 # - push to main / manual: always (manual run can pin a version)
+# Optional Docker Hub mirror: set the repository secrets DOCKERHUB_USERNAME and
+# DOCKERHUB_TOKEN (Docker Hub personal access token, Read & Write; Read, Write & Delete
+# also lets CI update the Docker Hub overview). Without them the mirror is skipped.
 
 on:
   schedule:
@@ -129,6 +132,72 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.cache }}
           cache-to: type=gha,mode=max,scope=${{ matrix.cache }}
 
+  # Copies the finished GHCR images 1:1 to Docker Hub (no second build). Runs daily even
+  # when nothing was built, so tags missing on Docker Hub are filled in and the overview stays current.
+  dockerhub:
+    needs: [resolve, image]
+    if: ${{ !cancelled() && needs.resolve.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - name: Docker Hub not configured
+        if: env.DOCKERHUB_USERNAME == ''
+        run: echo "DOCKERHUB_USERNAME / DOCKERHUB_TOKEN not set, skipping the Docker Hub mirror" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+        if: env.DOCKERHUB_USERNAME != ''
+      - uses: docker/setup-buildx-action@v3
+        if: env.DOCKERHUB_USERNAME != ''
+      - uses: docker/login-action@v3
+        if: env.DOCKERHUB_USERNAME != ''
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/login-action@v3
+        if: env.DOCKERHUB_USERNAME != ''
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Mirror images
+        if: env.DOCKERHUB_USERNAME != ''
+        run: |
+          set -euo pipefail
+          v="${{ needs.resolve.outputs.version }}"; v="${v#v}"
+          src="${IMAGE,,}"
+          dst="docker.io/${DOCKERHUB_USERNAME,,}/ollarc-intel"
+          # same suffixes as the image matrix
+          for s in "" -arl-h -dg2 -bmg; do
+            if ! docker buildx imagetools inspect "$src:$v$s" >/dev/null 2>&1; then
+              echo "::warning::$src:$v$s does not exist (build failed?), not mirrored"
+              continue
+            fi
+            # fresh build: always copy; otherwise only fill in missing tags
+            if [ "${{ needs.resolve.outputs.build }}" != "true" ] \
+               && docker buildx imagetools inspect "$dst:$v$s" >/dev/null 2>&1; then
+              echo "$dst:$v$s already up to date"
+              continue
+            fi
+            docker buildx imagetools create -t "$dst:$v$s" -t "$dst:latest$s" "$src:$v$s"
+            echo "mirrored $src:$v$s -> $dst:$v$s, $dst:latest$s" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Render Docker Hub overview
+        if: env.DOCKERHUB_USERNAME != ''
+        run: sed "s#{{IMAGE}}#${DOCKERHUB_USERNAME,,}/ollarc-intel#g" docs/dockerhub.md > dockerhub-readme.md
+      # needs a token with Read, Write & Delete; with Read & Write only this step fails harmlessly
+      - uses: peter-evans/dockerhub-description@v4
+        if: env.DOCKERHUB_USERNAME != ''
+        continue-on-error: true
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/ollarc-intel
+          short-description: "Upstream Ollama accelerated on Intel Arc / Xe GPUs (iGPU + dGPU) via llama.cpp SYCL"
+          readme-filepath: ./dockerhub-readme.md
+
   release:
     needs: [resolve, image]
     runs-on: ubuntu-latest
@@ -147,6 +216,7 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           v="${{ needs.resolve.outputs.version }}"
           image="${IMAGE,,}"
@@ -160,6 +230,10 @@ jobs:
             pull "-dg2"   "dedicated Arc A-series (A770, A750, A580, A380, A310)"
             pull "-bmg"   "dedicated Arc B-series (B580, B570, Arc Pro B50 / B60)"
             echo '```'
+            echo
+            if [ -n "$DOCKERHUB_USERNAME" ]; then
+              echo "Also on Docker Hub (same images): \`docker.io/${DOCKERHUB_USERNAME,,}/ollarc-intel\` with the same tags."
+            fi
             echo
             echo "The same tags without the version (\`latest\`, \`latest-arl-h\`, \`latest-dg2\`, \`latest-bmg\`) always point to the newest build."
             echo "Dedicated Arc cards: [docs/arc-dgpu.md](https://github.com/${{ github.repository }}/blob/main/docs/arc-dgpu.md) · Share your numbers: [benchmark form](https://github.com/${{ github.repository }}/issues/new?template=benchmark.yml)"

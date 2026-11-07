@@ -7,6 +7,7 @@
 # Local settings belong in .env (not in this file), e.g.:
 #   RENDER_GID=993  OLLARC_TAG=latest-arl-h  OLLAMA_CONTEXT_LENGTH=32768
 #
+# Registry: GHCR by default; the same images are on Docker Hub (OLLARC_IMAGE=dosperado74/ollarc-intel).
 # Image tags (set OLLARC_TAG in .env): latest, or a pinned Ollama version such as 0.40.14.
 # latest runs on every Intel GPU (Meteor/Arrow/Lunar Lake, Arc A/B). Optional precompiled
 # kernels: latest-arl-h (Arrow Lake-H iGPU), latest-dg2 (Arc A-series), latest-bmg (Arc B-series).
@@ -14,7 +15,7 @@
 
 services:
   ollama:
-    image: ghcr.io/dosperado74/ollarc-intel:${OLLARC_TAG:-latest}
+    image: ${OLLARC_IMAGE:-ghcr.io/dosperado74/ollarc-intel}:${OLLARC_TAG:-latest}
     container_name: ollama
     restart: unless-stopped
     devices:

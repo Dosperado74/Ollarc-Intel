@@ -1,5 +1,8 @@
 # ollarc-intel
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/dosperado74/ollarc-intel?logo=docker)](https://hub.docker.com/r/dosperado74/ollarc-intel)
+[![Image size](https://img.shields.io/docker/image-size/dosperado74/ollarc-intel/latest?logo=docker)](https://hub.docker.com/r/dosperado74/ollarc-intel/tags)
+
 **The current upstream [Ollama](https://github.com/ollama/ollama), accelerated on Intel GPUs through the llama.cpp SYCL backend (oneAPI / Level Zero).**
 
 Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no longer developed, Vulkan leaves a lot of performance on Intel iGPUs unused, and OpenVINO needs a separate model workflow. ollarc-intel takes the current Ollama release unchanged, adds a small patch set for a SYCL GPU backend, and rebuilds automatically whenever Ollama ships a new version.
@@ -104,6 +107,10 @@ JIT images compile the GPU kernels once when a model is loaded; AOT images ship 
 precompiled, which only shortens that first load. Inference speed is the same.
 Every AOT tag also exists per version, e.g. `0.40.14-dg2`.
 
+The same images are also on Docker Hub: [`dosperado74/ollarc-intel`](https://hub.docker.com/r/dosperado74/ollarc-intel)
+with identical tags (`docker pull dosperado74/ollarc-intel:latest-arl-h`). In `docker-compose.yml`, set
+`OLLARC_IMAGE=dosperado74/ollarc-intel` in `.env` to pull from there.
+
 > **AOT and models above 4 GB.** Upstream llama.cpp builds AOT kernels without support
 > for GPU buffers larger than 4 GB, so every model above ~4 GB (gpt-oss, Qwen 27B, …)
 > produced garbage such as `GGGG…` with the first `latest-arl-h` images.
@@ -182,6 +189,7 @@ photo tagging), not chat-sized LLMs.
 - `.github/workflows/build.yml` runs daily. It builds the JIT image and the AOT images (Arrow Lake-H, Arc A-series `dg2`, Arc B-series `bmg`) for the newest upstream release and pushes them to GHCR. The JIT build fails if a SYCL / Level Zero library is unresolved in the image.
 - First run: *Actions → build → Run workflow*. Afterwards set the package to **public** under *Packages → ollarc-intel → Package settings → Change visibility*.
 - The repository must be **public** for unlimited free Actions minutes.
+- Docker Hub mirror (optional): add the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (Docker Hub personal access token). The `dockerhub` job then copies every GHCR tag 1:1 to [`docker.io/dosperado74/ollarc-intel`](https://hub.docker.com/r/dosperado74/ollarc-intel) (no second build) and fills in missing tags daily. With a *Read, Write & Delete* token it also publishes [docs/dockerhub.md](docs/dockerhub.md) as the Docker Hub overview. Without the secrets the job is skipped.
 
 ## License
 
