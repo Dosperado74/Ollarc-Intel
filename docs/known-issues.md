@@ -80,6 +80,14 @@ exact gpt-oss shapes) passed, and the JIT image produced correct output.
   AOT image printed only `GGGG…`. `latest-arl-h` is built with it.
 - Upstream report: [ggml-org/llama.cpp#31685](https://github.com/ggml-org/llama.cpp/issues/31685)
   (notes: [`docs/upstream/llama.cpp-sycl-aot-4gb.md`](upstream/llama.cpp-sycl-aot-4gb.md)).
+- Upstream fix: [ggml-org/llama.cpp#31873](https://github.com/ggml-org/llama.cpp/pull/31873)
+  (open). Its `CMakeLists.txt` change is identical to our patch. Ollama's patch step
+  (`cmake/apply-git-patches.cmake`) skips a patch that is already applied
+  (`git apply --reverse --check`), so builds keep working once Ollama pins a llama.cpp
+  with the fix; the build log then shows *"900-sycl-aot-4gb-buffers.patch already
+  applied, skipping"* and the patch can be deleted. If upstream merges a different
+  form of the fix, the patch no longer applies and the build fails loudly (the scheduled
+  build opens an issue) instead of silently shipping kernels without the fix.
 
 ## 4. Flash attention with head size 256
 
