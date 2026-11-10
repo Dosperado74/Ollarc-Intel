@@ -22,6 +22,16 @@ Set all variables in the `environment:` block of the `ollama` service.
 | `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS` | `1` | allows allocations > 4 GiB (large models) |
 | `GGML_SYCL_DYNAMIC_PRECISION` | `F16` | set to `BF16` if a model outputs garbage/NaN (F16 overflow) |
 
+## Deliberately not used
+
+Other Intel GPU setups set these; ollarc-intel does not, on purpose. Try them with
+[`scripts/ab-env.sh`](diagnostics.md#ab-testing-runtime-switches) if you are curious.
+
+| Variable | Why not |
+|---|---|
+| `SYCL_CACHE_PERSISTENT=1` | only shortens the first model load (kernel JIT), not inference. llama.cpp [advises against it](https://github.com/ggml-org/llama.cpp/blob/master/docs/backend/SYCL.md): cached kernels of an older SYCL binary mixed with a newer one can crash, and the images update daily. The AOT images (`latest-arl-h`, `-dg2`, `-bmg`) solve the same problem without a cache |
+| `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1` | Intel switched immediate command lists **off** on Meteor Lake / Arrow Lake under Linux "due to driver limitations" ([intel/llvm#19950](https://github.com/intel/llvm/pull/19950)); forcing them on risks hangs or wrong output for an expected gain of at most a few percent (not measured; token generation is memory-bandwidth bound). Arc A-series already uses them, Arc B-series and Lunar Lake always do |
+
 ## Choosing models
 
 - Token generation on an iGPU is **memory-bandwidth bound**: smaller quants are faster.
@@ -36,4 +46,3 @@ Arrow Lake-H (Core Ultra 200H) use `OLLARC_TAG=latest-arl-h`: its kernels are
 precompiled (AOT) for the Arc 140T / 130T. Dedicated Arc cards have their own AOT
 images: `latest-dg2` (A-series) and `latest-bmg` (B-series), see
 [arc-dgpu.md](arc-dgpu.md). Inference speed is the same either way.
-llama.cpp explicitly does **not** recommend `SYCL_CACHE_PERSISTENT=1`.

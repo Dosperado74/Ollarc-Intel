@@ -151,11 +151,17 @@ docker build --build-arg SYCL_DEVICE_ARCH=bmg-g21 -t ollarc-intel:bmg .   # AOT 
 ./scripts/bench.sh llama3.2:3b qwen3.8:latest
 ```
 
-The script prints prefill and decode tokens/s, so you can compare against Vulkan or OpenVINO on the same machine. Please share your results with the [benchmark form](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml): it asks for everything needed to compare GPUs.
+The script prints prefill and decode tokens/s and the time of the first request (model load, kernel JIT), so you can compare against Vulkan or OpenVINO on the same machine. To compare environment variables, `scripts/ab-env.sh` recreates the container once per variant, benchmarks it, checks the answers and restores your configuration afterwards, see [docs/diagnostics.md](docs/diagnostics.md#ab-testing-runtime-switches):
+
+```bash
+./scripts/ab-env.sh baseline baseline OLLAMA_FLASH_ATTENTION=1
+```
+
+Please share your results with the [benchmark form](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml): it asks for everything needed to compare GPUs.
 
 ## Tuning
 
-See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optimized path on SYCL, MoE models (`gpt-oss`, `…-a3b`) are much faster on an iGPU than dense models of the same size, and thinking can be switched off per model in Open WebUI.
+See [docs/tuning.md](docs/tuning.md). In short: `Q4_0` quants are the most optimized path on SYCL, MoE models (`gpt-oss`, `…-a3b`) are much faster on an iGPU than dense models of the same size, and thinking can be switched off per model in Open WebUI. Some switches that other Intel GPU setups use (`SYCL_CACHE_PERSISTENT`, `UR_L0_USE_IMMEDIATE_COMMANDLISTS`) are [deliberately not used](docs/tuning.md#deliberately-not-used), with the reasons.
 
 ## What about the NPU?
 
@@ -180,7 +186,7 @@ photo tagging), not chat-sized LLMs.
 | [docs/devices.md](docs/devices.md) | devices with the same GPU that are not tested yet (e.g. UGREEN NASync iDX6011 Pro) |
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
-| [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, trying runtime switches |
+| [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, A/B testing runtime switches (`scripts/ab-env.sh`) |
 | [docs/known-issues.md](docs/known-issues.md) | everything found so far, with causes and fixes |
 | [docs/upstream/](docs/upstream/) | reports prepared for upstream projects |
 
