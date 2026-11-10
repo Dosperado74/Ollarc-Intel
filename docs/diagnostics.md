@@ -20,11 +20,16 @@ Proxmox host**. Inside an unprivileged LXC they cannot see the GPU.
 ```bash
 ./scripts/bench.sh llama3.2:3b qwen3.8:latest
 RUNS=1 NUM_PREDICT=64 ./scripts/bench.sh qwen3.8:latest      # quick run
+./scripts/bench.sh --all                                      # every installed model
 ```
 
-Prints prefill and decode tokens/s per model, `load(s)` of the measured runs and
+Prints prefill and decode tokens/s per model, `load(s)` of the measured runs,
 `first(s)`, the time of the first request (model load plus kernel JIT, if the model was
-not loaded yet). Thinking is disabled for the measurement. Please share your results with the [benchmark form](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
+not loaded yet), and `GPU`, the share of the model in GPU memory (`100%` = fully offloaded).
+`--all` runs every installed model, smallest first, skips embedding models, keeps going
+if one model fails, and unloads each model afterwards, so `first(s)` is a real cold load.
+The short prompt makes prefill numbers lower than with long prompts; compare prefill only
+between runs of the same script. Thinking is disabled for the measurement. Please share your results with the [benchmark form](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
 ## Trying runtime switches
 

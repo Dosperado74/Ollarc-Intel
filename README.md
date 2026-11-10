@@ -149,9 +149,10 @@ docker build --build-arg SYCL_DEVICE_ARCH=bmg-g21 -t ollarc-intel:bmg .   # AOT 
 
 ```bash
 ./scripts/bench.sh llama3.2:3b qwen3.8:latest
+./scripts/bench.sh --all                       # every installed model
 ```
 
-The script prints prefill and decode tokens/s and the time of the first request (model load, kernel JIT), so you can compare against Vulkan or OpenVINO on the same machine. To compare environment variables, `scripts/ab-env.sh` recreates the container once per variant, benchmarks it, checks the answers and restores your configuration afterwards, see [docs/diagnostics.md](docs/diagnostics.md#ab-testing-runtime-switches):
+The script prints prefill and decode tokens/s, the time of the first request (model load, kernel JIT) and how much of the model sits on the GPU, so you can compare against Vulkan or OpenVINO on the same machine. To compare environment variables, `scripts/ab-env.sh` recreates the container once per variant, benchmarks it, checks the answers and restores your configuration afterwards, see [docs/diagnostics.md](docs/diagnostics.md#ab-testing-runtime-switches):
 
 ```bash
 ./scripts/ab-env.sh baseline baseline OLLAMA_FLASH_ATTENTION=1
