@@ -119,9 +119,9 @@ Token generation on an iGPU is limited by memory bandwidth (dual-channel DDR5,
 
 | Model | Type | Expected decode |
 |---|---|---|
-| `llama3.2:3b` | dense 3B | **24.3 tok/s** measured |
+| `llama3.2:3b` | dense 3B | **26.1 tok/s** measured (v0.40.16) |
 | `qwen3.8:27b` (Q4) | dense 27B, ~16.5 GB active | **3.2–5.9 tok/s** measured; prefill 109 tok/s |
-| `gpt-oss:20b` | MoE, ~3.6B active | **12.8 tok/s** measured (10.6 at 6.5K context); prefill **1106 tok/s** |
+| `gpt-oss:20b` | MoE, ~3.6B active | **14.0 tok/s** measured (v0.40.16; 10.6 at 6.5K context with v0.40.14); prefill **1106 tok/s** |
 | `gpt-oss:120b` | MoE, ~5.1B active, ~65 GB | ~1.4× slower than 20b, needs ~65 GB free for the iGPU |
 
 Thinking models (Qwen3.8, gpt-oss) can write thousands of thinking tokens before the

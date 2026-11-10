@@ -17,10 +17,10 @@ ASUS NUC 14 Pro+, Core Ultra 9 285H (Arc 140T iGPU), tag `latest-arl-h`, 100 % G
 
 | Model | Prefill | Decode |
 |---|---|---|
-| `llama3.2:3b` (Q4_K_M) | 1249 tok/s | **24.3 tok/s** |
-| `gpt-oss:20b` (MXFP4) | 288 – 1106 tok/s | **12.8 tok/s** |
+| `llama3.2:3b` (Q4_K_M) | 1249 tok/s | **26.1 tok/s** |
+| `gpt-oss:20b` (MXFP4) | 288 – 1106 tok/s | **14.0 tok/s** |
 | `gemma4:e4b` | 361 tok/s | **16.1 tok/s** |
-| `gemma-4-26B-A4B-it-qat-q4_0` (MoE) | 184 tok/s | **14.3 tok/s** |
+| `gemma-4-26B-A4B-it-qat-q4_0` (MoE) | 184 tok/s | **14.6 tok/s** |
 
 More numbers and how they were measured: [README](https://github.com/Dosperado74/ollarc-intel#status).
 
