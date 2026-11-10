@@ -46,6 +46,7 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       build: ${{ steps.v.outputs.build }}
+      release_missing: ${{ steps.v.outputs.release_missing }}
     steps:
       - uses: actions/checkout@v7
       - id: v
@@ -67,7 +68,12 @@ jobs:
             fi
           fi
           echo "build=$build" >> "$GITHUB_OUTPUT"
-          echo "upstream=$version build=$build" | tee -a "$GITHUB_STEP_SUMMARY"
+          # images exist but the release job did not finish (e.g. its push was rejected):
+          # let the release job catch up without rebuilding the images
+          release_missing=false
+          gh release view "$version" -R "${{ github.repository }}" >/dev/null 2>&1 || release_missing=true
+          echo "release_missing=$release_missing" >> "$GITHUB_OUTPUT"
+          echo "upstream=$version build=$build release_missing=$release_missing" | tee -a "$GITHUB_STEP_SUMMARY"
 
   image:
     needs: resolve
@@ -200,19 +206,36 @@ jobs:
 
   release:
     needs: [resolve, image]
+    # after a successful build, or to catch up on a release whose images already exist
+    if: >-
+      ${{ !cancelled() && needs.resolve.result == 'success' &&
+          (needs.image.result == 'success' ||
+           (needs.image.result == 'skipped' && needs.resolve.outputs.release_missing == 'true')) }}
     runs-on: ubuntu-latest
     steps:
+      # the branch head, not the commit that started the run: the build takes about an hour
+      # and the branch may have moved in the meantime
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
       - name: Bump UPSTREAM_VERSION
         run: |
+          set -euo pipefail
           v="${{ needs.resolve.outputs.version }}"
-          if [ "$(cat UPSTREAM_VERSION)" != "$v" ]; then
-            echo "$v" > UPSTREAM_VERSION
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -am "chore: track upstream Ollama $v"
-            git push
+          cur=$(cat UPSTREAM_VERSION)
+          # only move forward (a manual build of an older version must not downgrade it)
+          if [ "$cur" = "$v" ] || [ "$(printf '%s\n%s\n' "$cur" "$v" | sort -V | tail -1)" != "$v" ]; then
+            echo "UPSTREAM_VERSION stays $cur"; exit 0
           fi
+          echo "$v" > UPSTREAM_VERSION
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: track upstream Ollama $v"
+          for i in 1 2 3; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 10))
+          done
+          echo "::error::could not push the UPSTREAM_VERSION bump"; exit 1
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -246,7 +269,7 @@ jobs:
           fi
 
   report-failure:
-    needs: [resolve, image]
+    needs: [resolve, image, release]
     if: failure() && github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -257,4 +280,4 @@ jobs:
           title="Build failed for upstream Ollama $v"
           gh issue list -R "${{ github.repository }}" --state open --search "$title in:title" --json number --jq '.[0].number' | grep -q . && exit 0
           gh issue create -R "${{ github.repository }}" --title "$title" \
-            --body "The scheduled build for $v failed (patches may no longer apply). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --body "The scheduled build or release for $v failed (patches may no longer apply, or the release job could not push). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
