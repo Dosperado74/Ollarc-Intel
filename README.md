@@ -28,17 +28,18 @@ Ollama officially supports NVIDIA, AMD and (slower) Vulkan. `ipex-llm` is no lon
 
 ## Status
 
-Tested on an ASUS NUC 14 Pro+ with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC, Ollama v0.40.14:
+Tested on an ASUS NUC 14 Pro+ with Core Ultra 9 285H (Arc 140T iGPU), Proxmox VE 9 LXC.
+Decode: Ollama v0.40.16 (values marked ¹: v0.40.14). Prefill: v0.40.14 with the prompt length given:
 
 | Model | Result | Prefill | Decode |
 |---|---|---|---|
-| `llama3.2:3b` (Q4_K_M) | ✅ 100 % GPU, `latest-arl-h` | **1249 tok/s** (~800-token prompt) | **24.3 tok/s** |
-| `gpt-oss:20b` (MXFP4) | ✅ 100 % GPU, `latest-arl-h` | 288 tok/s (~800-token prompt), **1106 tok/s** (6549-token prompt) | **12.8 tok/s** (empty context), 10.6 tok/s (6.5K context) |
-| `gemma4:e4b` | ✅ 100 % GPU, `latest-arl-h` (per-layer embeddings stay in RAM by design) | 361 tok/s (~800-token prompt) | **16.1 tok/s** |
-| [`gemma-4-26B-A4B-it-qat-q4_0`](https://huggingface.co/google/gemma-4-26B-A4B-it-qat-q4_0-gguf) (MoE, QAT Q4_0) | ✅ 100 % GPU, `latest-arl-h` | 184 tok/s (~800-token prompt) | **14.3 tok/s** |
-| `qwen3.8:27b` (Q4, dense) | ✅ 100 % GPU (66/66 layers), `latest-arl-h` | 109 tok/s (~800-token prompt) | 3.2–5.9 tok/s (depends on how well its MTP head predicts) |
+| `llama3.2:3b` (Q4_K_M) | ✅ 100 % GPU, `latest-arl-h` | **1249 tok/s** (~800-token prompt) | **26.1 tok/s** |
+| `gpt-oss:20b` (MXFP4) | ✅ 100 % GPU, `latest-arl-h` | 288 tok/s (~800-token prompt), **1106 tok/s** (6549-token prompt) | **14.0 tok/s** (empty context), 10.6 tok/s (6.5K context)¹ |
+| `gemma4:e4b` | ✅ 100 % GPU, `latest-arl-h` (per-layer embeddings stay in RAM by design) | 361 tok/s (~800-token prompt) | **16.1 tok/s**¹ |
+| [`gemma-4-26B-A4B-it-qat-q4_0`](https://huggingface.co/google/gemma-4-26B-A4B-it-qat-q4_0-gguf) (MoE, QAT Q4_0) | ✅ 100 % GPU, `latest-arl-h` | 184 tok/s (~800-token prompt) | **14.6 tok/s** (`gemma4:26b-qat` from the Ollama registry) |
+| `qwen3.8:27b` (Q4, dense) | ✅ 100 % GPU (66/66 layers), `latest-arl-h` | 109 tok/s (~800-token prompt) | 3.2–5.9 tok/s¹ (depends on how well its MTP head predicts), 3.6 tok/s with v0.40.16 |
 
-Measured in Open WebUI / `scripts/bench.sh`. MoE models like gpt-oss process long prompts much more
+Measured in Open WebUI / `scripts/bench.sh` (decode with `./scripts/bench.sh --all`). MoE models like gpt-oss process long prompts much more
 efficiently than short ones, because each expert gets a bigger batch. More results from other Intel
 GPUs are very welcome: [share a benchmark](https://github.com/Dosperado74/ollarc-intel/issues/new?template=benchmark.yml).
 
