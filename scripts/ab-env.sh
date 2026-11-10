@@ -89,10 +89,9 @@ for variant in "$@"; do
   done
   errs=$(docker compose "${args[@]}" logs --since "$since" "$SERVICE" 2>&1 \
          | grep -ciE 'segfault|abort|exception|UR_RESULT_ERROR|out of memory|error loading' || true)
-  cache=$(docker compose "${args[@]}" exec -T "$SERVICE" sh -c 'du -sh /root/.ollama/sycl-cache 2>/dev/null | cut -f1' || true)
 
   block="### [$n] $variant"$'\n'"$(grep -vE '^ollama |^$' <<< "$out" || true)"$'\n'"$check"
-  block+="  log errors: $errs${cache:+   sycl-cache: $cache}"$'\n'
+  block+="  log errors: $errs"$'\n'
   summary+="$block"$'\n'
   printf '%s\n' "$block" >&2
 done

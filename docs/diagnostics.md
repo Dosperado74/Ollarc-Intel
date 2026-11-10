@@ -53,10 +53,8 @@ answer check, counts error lines in the log and prints a summary. At the end, al
 Ctrl-C, the container is recreated with your normal configuration.
 
 ```bash
-# immediate command lists (Meteor Lake / Arrow Lake)
-MODELS="llama3.2:3b gpt-oss:20b" ./scripts/ab-env.sh baseline baseline UR_L0_USE_IMMEDIATE_COMMANDLISTS=1
-# persistent kernel cache (latest image): 2nd cache run should show a much lower first(s)
-./scripts/ab-env.sh baseline baseline SYCL_CACHE_PERSISTENT=1 SYCL_CACHE_PERSISTENT=1
+MODELS="llama3.2:3b gpt-oss:20b" ./scripts/ab-env.sh baseline baseline OLLAMA_FLASH_ATTENTION=1
+MODELS="llama3.2:3b" RUNS=5 ./scripts/ab-env.sh baseline baseline OLLAMA_FLASH_ATTENTION=1,OLLAMA_KV_CACHE_TYPE=q8_0
 ```
 
 Start with `baseline` twice: the first run also reads the model from disk. Several
