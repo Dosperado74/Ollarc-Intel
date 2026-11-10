@@ -73,6 +73,13 @@ body:
       required: true
 
   - type: textarea
+    id: ab
+    attributes:
+      label: Output of scripts/ab-env.sh (optional)
+      description: If you compared environment variables, paste the summary, including both `baseline` blocks.
+      render: text
+
+  - type: textarea
     id: logs
     attributes:
       label: GPU detection
