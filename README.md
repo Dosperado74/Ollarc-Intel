@@ -180,7 +180,7 @@ photo tagging), not chat-sized LLMs.
 | [docs/devices.md](docs/devices.md) | devices with the same GPU that are not tested yet (e.g. UGREEN NASync iDX6011 Pro) |
 | [docs/proxmox.md](docs/proxmox.md) | Proxmox VE: LXC with `/dev/dri`, or returning an iGPU from VM passthrough |
 | [docs/tuning.md](docs/tuning.md) | environment variables, model choice, context length |
-| [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, trying runtime switches |
+| [docs/diagnostics.md](docs/diagnostics.md) | is the GPU used, benchmark, A/B testing runtime switches (`scripts/ab-env.sh`) |
 | [docs/known-issues.md](docs/known-issues.md) | everything found so far, with causes and fixes |
 | [docs/upstream/](docs/upstream/) | reports prepared for upstream projects |
 

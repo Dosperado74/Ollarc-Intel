@@ -12,7 +12,7 @@ NUM_PREDICT="${NUM_PREDICT:-256}"
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 
 echo "ollama $(curl -fsS "$URL/api/version" | jq -r .version 2>/dev/null || echo unknown)"
-printf '%-28s %10s %10s %10s\n' MODEL "prefill" "decode" "load(s)"
+printf '%-28s %10s %10s %10s %10s\n' MODEL "prefill" "decode" "load(s)" "first(s)"
 for m in "${MODELS[@]}"; do
   if ! curl -fsS "$URL/api/show" -d "{\"model\":\"$m\"}" >/dev/null 2>&1; then
     echo "  pulling $m ..." >&2
@@ -20,7 +20,9 @@ for m in "${MODELS[@]}"; do
   fi
   # warm-up (model load + SYCL kernel JIT)
   echo "  $m: loading / warm-up ..." >&2
-  curl -fsS "$URL/api/generate" -d "{\"model\":\"$m\",\"prompt\":\"hi\",\"stream\":false,\"options\":{\"num_predict\":1}}" >/dev/null
+  # first(s): wall time of this first request = model load + kernel JIT if not loaded yet
+  w=$(curl -fsS "$URL/api/generate" -d "{\"model\":\"$m\",\"prompt\":\"hi\",\"stream\":false,\"options\":{\"num_predict\":1}}")
+  first=$(jq -n --argjson r "$w" '$r.total_duration/1e9')
   pp=0; tg=0; ld=0
   for i in $(seq "$RUNS"); do
     echo "  $m: run $i/$RUNS (${NUM_PREDICT} tokens) ..." >&2
@@ -31,8 +33,8 @@ for m in "${MODELS[@]}"; do
     tg=$(jq -n --argjson a "$tg" --argjson r "$r" '$a + ($r.eval_count / ($r.eval_duration/1e9))')
     ld=$(jq -n --argjson a "$ld" --argjson r "$r" '$a + ($r.load_duration/1e9)')
   done
-  printf '%-28s %8.1f/s %8.1f/s %10.2f\n' "$m" \
-    "$(jq -n "$pp/$RUNS")" "$(jq -n "$tg/$RUNS")" "$(jq -n "$ld/$RUNS")"
+  printf '%-28s %8.1f/s %8.1f/s %10.2f %10.2f\n' "$m" \
+    "$(jq -n "$pp/$RUNS")" "$(jq -n "$tg/$RUNS")" "$(jq -n "$ld/$RUNS")" "$first"
 done
 echo
 curl -fsS "$URL/api/ps" | jq -r '.models[] | "\(.name): \(.size_vram/1e9|floor) GB on GPU of \(.size/1e9|floor) GB"' 2>/dev/null || true
