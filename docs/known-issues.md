@@ -9,7 +9,7 @@ Ollama v0.40.14, llama.cpp b11963, oneAPI 2026.2.
 |---|---|---|---|
 | 1 | `sycl-ls`: *No platforms found*, Ollama runs on CPU | oneAPI runtime image does not register `libumf.so.1` with the dynamic linker | **fixed** in the image |
 | 2 | `offloaded 0/66 layers to GPU`, `ollama ps` shows `99%/1% CPU/GPU` | Level Zero Sysman reports the host's *MemFree* as free iGPU memory | **fixed** (`GGML_SYCL_GET_MEM_API=1`) |
-| 3 | Models > 4 GB answer `GGGGGGGG…` or loop, Ollama aborts with *token repeat limit reached* | AOT (`arl-h`) kernels built without >4 GB buffer support | **fixed** (patch, verified on Arc 140T) |
+| 3 | Models > 4 GB answer `GGGGGGGG…` or loop, Ollama aborts with *token repeat limit reached* | AOT (`arl-h`) kernels built without >4 GB buffer support | **fixed** (patch, verified on Arc 140T); fixed upstream in llama.cpp `dcbff21`, patch stays until Ollama pins it |
 | 4 | `test-backend-ops`: 2 × `FLASH_ATTN_EXT` fail (`hsk=256`) | SYCL flash attention, head size 256 | open, upstream |
 | 5 | `test-backend-ops`: 2 × `MUL_MAT` fail (`bf16`, permuted `src0`) | SYCL BF16 mat-mul on non-contiguous weights | open, upstream |
 | 6 | Qwen3.8 27B answers take minutes | dense 27B model + long *thinking* phase on an iGPU | expected, see below |
@@ -80,8 +80,11 @@ exact gpt-oss shapes) passed, and the JIT image produced correct output.
   AOT image printed only `GGGG…`. `latest-arl-h` is built with it.
 - Upstream report: [ggml-org/llama.cpp#31685](https://github.com/ggml-org/llama.cpp/issues/31685)
   (notes: [`docs/upstream/llama.cpp-sycl-aot-4gb.md`](upstream/llama.cpp-sycl-aot-4gb.md)).
-- Upstream fix: [ggml-org/llama.cpp#31873](https://github.com/ggml-org/llama.cpp/pull/31873)
-  (open). Its `CMakeLists.txt` change is identical to our patch. Ollama's patch step
+- Upstream fix: [ggml-org/llama.cpp#31873](https://github.com/ggml-org/llama.cpp/pull/31873),
+  **merged 2026-11-12** into `master` (`dcbff21`). When it was reviewed, its `CMakeLists.txt`
+  change was identical to our patch; the merged PR also carries further SYCL build changes
+  (no-XMX build), so the first build against a llama.cpp with `dcbff21` shows which of the
+  two cases below applies. The patch stays until Ollama pins such a build. Ollama's patch step
   (`cmake/apply-git-patches.cmake`) skips a patch that is already applied
   (`git apply --reverse --check`), so builds keep working once Ollama pins a llama.cpp
   with the fix; the build log then shows *"900-sycl-aot-4gb-buffers.patch already

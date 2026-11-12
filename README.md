@@ -117,7 +117,9 @@ with identical tags (`docker pull dosperado74/ollarc-intel:latest-arl-h`). In `d
 > produced garbage such as `GGGG…` with the first `latest-arl-h` images.
 > [`patches/llama.cpp/900-sycl-aot-4gb-buffers.patch`](patches/llama.cpp/900-sycl-aot-4gb-buffers.patch)
 > fixes the build (verified with gpt-oss:20b on an Arc 140T). If you still get `GGGG…`,
-> run `docker compose pull`.
+> run `docker compose pull`. The fix is merged upstream
+> ([ggml-org/llama.cpp#31873](https://github.com/ggml-org/llama.cpp/pull/31873)); the patch is
+> dropped once Ollama ships a llama.cpp that contains it.
 > Details: [known-issues.md §3](docs/known-issues.md#3-models-above-4-gb-compute-garbage-with-aot-kernels).
 
 ## How it works
